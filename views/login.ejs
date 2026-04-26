@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Marketplace</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h2>✨ Bienvenido</h2>
+            <p class="subtitle">Ingresa tus datos para continuar</p>
+
+            <% if (typeof error !== 'undefined') { %>
+                <div class="error-msg">
+                    ⚠️ <%= error %>
+                </div>
+            <% } %>
+
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" name="email" placeholder="ejemplo@correo.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn-login">Entrar al Marketplace</button>
+            </form>
+
+            <div class="auth-footer">
+                ¿No tienes cuenta? <a href="/registro">Regístrate gratis</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Gestión - Artesano</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+    <a href="/catalogo" class="nav-logo">
+        <span>✨</span> Marketplace
+    </a>
+    
+    <div class="nav-links">
+        <a href="/catalogo" class="nav-link">Inicio</a>
+        
+        <a href="/mis-productos" class="nav-link">Mi Panel</a>
+        
+        <a href="/perfil" class="nav-link">Mi Perfil</a>
+        
+        <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
+    </div>
+</nav>
+
+    <div class="container" style="padding-top: 30px; max-width: 1200px; margin: auto;">
+        <h1 style="margin-left: 20px;">Gestión de Productos</h1>
+    </div>
+
+    <div class="panel-container">
+        <aside class="panel-card">
+            <h3 style="margin-bottom: 20px; color: var(--primario);">Subir Nueva Obra</h3>
+            <form action="/productos/nuevo" method="POST">
+                <div class="form-group">
+                    <label>Nombre del Producto</label>
+                    <input type="text" name="nombre" placeholder="Ej: Jarrón de Barro" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción corta</label>
+                    <textarea name="descripcion" style="width: 100%; height: 80px; padding: 10px; border-radius: 8px; border: 1.5px solid var(--borde); font-family: inherit;"></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label>Precio (₲)</label>
+                        <input type="number" name="precio" placeholder="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" name="stock" placeholder="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <input type="text" name="categoria" placeholder="Ej: Cerámica">
+                </div>
+
+                <div class="form-group">
+                    <label>Variantes / Opciones</label>
+                    <input type="text" name="variantes" placeholder="Ej: Rojo, Azul, Verde">
+                </div>
+
+                <button type="submit" class="btn-login" style="margin-top: 10px;">Publicar Producto</button>
+            </form>
+        </aside>
+
+        <main class="panel-card" style="padding: 0;">
+            <div style="padding: 20px; border-bottom: 1px solid var(--borde);">
+                <h3 style="color: var(--oscuro);">Mis Productos Publicados</h3>
+            </div>
+            <table class="tabla-artesanal">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% productos.forEach(p => { %>
+                        <tr>
+                            <td>
+                                <strong><%= p.nombre %></strong><br>
+                                <small style="color: #999;"><%= p.variantes || 'Sin variantes' %></small>
+                            </td>
+                            <td><span style="color: #636e72;"><%= p.categoria %></span></td>
+                            <td style="font-weight: 600;">₲<%= p.precio %></td>
+                            <td><span class="badge-stock"><%= p.stock %> und.</span></td>
+                            <td>
+                                <a href="/productos/editar/<%= p.id %>" style="color: var(--primario); text-decoration: none; font-weight: bold; font-size: 0.9rem;">✏️ Editar</a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            <% if (productos.length === 0) { %>
+                <div style="padding: 40px; text-align: center; color: #999;">
+                    Aún no tienes productos publicados.
+                </div>
+            <% } %>
+        </main>
+    </div>
+</body>
+</html>

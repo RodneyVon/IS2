@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Producto - <%= producto.nombre %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+    <a href="/catalogo" class="nav-logo">
+        <span>✨</span> Marketplace
+    </a>
+    
+    <div class="nav-links">
+        <a href="/catalogo" class="nav-link">Inicio</a>
+        
+        <a href="/mis-productos" class="nav-link">Mi Panel</a>
+        
+        <a href="/perfil" class="nav-link">Mi Perfil</a>
+        
+        <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
+    </div>
+</nav>
+
+    <div class="edit-container">
+        <div class="edit-card">
+            <header style="text-align: center; margin-bottom: 30px;">
+                <span style="font-size: 2rem;">📝</span>
+                <h2 style="margin-top: 10px;">Editar tu Producto</h2>
+                <p style="color: #636e72; font-size: 0.9rem;">Actualiza la información detallada de tu producto</p>
+            </header>
+
+            <form action="/productos/editar/<%= producto.id %>" method="POST">
+                <div class="form-group">
+                    <label>Nombre del Producto</label>
+                    <input type="text" name="nombre" value="<%= producto.nombre %>" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea name="descripcion" class="textarea-profesional"><%= producto.descripcion %></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Precio (₲)</label>
+                        <input type="number" name="precio" value="<%= producto.precio %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Disponible</label>
+                        <input type="number" name="stock" value="<%= producto.stock %>" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <input type="text" name="categoria" value="<%= producto.categoria %>" placeholder="Ej: Madera, Joyería...">
+                </div>
+
+                <div class="form-group">
+                    <label>Variantes u Opciones</label>
+                    <input type="text" name="variantes" value="<%= producto.variantes %>" placeholder="Ej: Tallas, Colores, Materiales...">
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button type="submit" class="btn-login">Guardar Cambios</button>
+                    <a href="/mis-productos" class="btn-secundario">Cancelar y Volver</a>
+                </div>
+            </form>
+        </div>
+        
+        <p style="text-align: center; margin-top: 20px; color: #999; font-size: 0.8rem;">
+            ID del Producto: #<%= producto.id %> | Vendedor ID: <%= producto.vendedor_id %>
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,485 @@
+:root {
+    --primario: #2a9d8f;
+    --secundario: #d4a373;
+    --texto: #2d3436;
+    --fondo: #f0f2f5;
+    --blanco: #ffffff;
+    --borde: #dfe6e9;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--fondo);
+    color: var(--texto);
+    /* Esto centra TODO el contenido de la pantalla */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Contenedor central para Login y Registro */
+.auth-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.auth-card {
+    background: var(--blanco);
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.auth-card h2 {
+    margin-bottom: 8px;
+    font-size: 1.8rem;
+    color: var(--oscuro);
+}
+
+.auth-card p.subtitle {
+    color: #636e72;
+    margin-bottom: 30px;
+    font-size: 0.95rem;
+}
+
+/* Inputs elegantes */
+.form-group {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #444;
+}
+
+input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1.5px solid var(--borde);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+input:focus {
+    border-color: var(--primario);
+    box-shadow: 0 0 0 4px rgba(42, 157, 143, 0.1);
+    outline: none;
+}
+
+/* Botón con estilo "App" */
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background-color: var(--primario);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s;
+}
+
+.btn-login:hover {
+    background-color: #21867a;
+}
+
+.auth-footer {
+    margin-top: 25px;
+    font-size: 0.9rem;
+    color: #636e72;
+}
+
+.auth-footer a {
+    color: var(--primario);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Mensaje de error profesional */
+.error-msg {
+    background: #fff0f0;
+    color: #d63031;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    border: 1px solid #ff7675;
+}
+
+/* Añadir esto a tu style.css si no lo tienes */
+select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1.5px solid var(--borde);
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: var(--blanco);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+select:focus {
+    border-color: var(--primario);
+    outline: none;
+}
+
+/*Panel Artesano*/
+
+/* Layout del Panel */
+.panel-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 350px 1fr; /* Columna fija para form, flexible para tabla */
+    gap: 30px;
+}
+
+.panel-card {
+    background: var(--blanco);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    height: fit-content;
+}
+
+/* Estilos de Tabla Pro */
+.tabla-artesanal {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--blanco);
+    border-radius: 12px;
+    overflow: hidden; /* Para que los bordes redondeados funcionen */
+}
+
+.tabla-artesanal th {
+    background-color: #f8f9fa;
+    color: #636e72;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 15px;
+    text-align: left;
+    border-bottom: 2px solid var(--borde);
+}
+
+.tabla-artesanal td {
+    padding: 15px;
+    border-bottom: 1px solid var(--borde);
+    font-size: 0.95rem;
+}
+
+.tabla-artesanal tr:hover {
+    background-color: #fcfcfc;
+}
+
+/* Badge de stock */
+.badge-stock {
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: #e1f5fe;
+    color: #0288d1;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+/*CATALOGO.EJS*/
+/* Contenedor del Catálogo */
+.catalogo-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* Rejilla de productos */
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+/* Tarjeta de Producto Estilo Boutique */
+.producto-card {
+    background: var(--blanco);
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--borde);
+    position: relative;
+}
+
+.producto-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+
+.card-categoria {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--primario);
+    letter-spacing: 1.2px;
+    margin-bottom: 10px;
+}
+
+.card-titulo {
+    font-size: 1.25rem;
+    color: var(--oscuro);
+    margin-bottom: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.card-taller {
+    font-size: 0.85rem;
+    color: #636e72;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.card-precio {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--texto);
+    margin: 15px 0;
+}
+
+/* Buscador Refinado */
+.buscador-seccion {
+    background: var(--blanco);
+    padding: 30px;
+    border-radius: 16px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.form-buscar {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+/*EDITAR-PRODUCTO.EJS*/
+/* Contenedor de Edición Enfocada */
+.edit-container {
+    max-width: 600px;
+    margin: 60px auto;
+    padding: 0 20px;
+}
+
+.edit-card {
+    background: var(--blanco);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+    border: 1px solid var(--borde);
+}
+
+.btn-secundario {
+    display: block;
+    text-align: center;
+    background-color: transparent;
+    color: #636e72;
+    border: 1px solid var(--borde);
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 15px;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.btn-secundario:hover {
+    background-color: #f8f9fa;
+    color: var(--oscuro);
+}
+
+/* Estilo para el área de texto en edición */
+.textarea-profesional {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 15px;
+    border: 1.5px solid var(--borde);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    resize: vertical;
+    transition: border-color 0.3s;
+}
+
+.textarea-profesional:focus {
+    border-color: var(--primario);
+    outline: none;
+}
+
+/*PRODUCTO-DETALLE.EJS*/
+/* Contenedor Maestro del Detalle */
+.detalle-wrapper {
+    max-width: 1000px;
+    margin: 50px auto;
+    padding: 0 20px;
+}
+
+.detalle-card {
+    background: var(--blanco);
+    border-radius: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr; /* Imagen izquierda, Info derecha */
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+    border: 1px solid var(--borde);
+}
+
+/* Espacio para la imagen (o placeholder artesanal) */
+.detalle-visual {
+    background: #f8f1e9; /* Tono crema suave */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    min-height: 400px;
+}
+
+.detalle-info {
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+}
+
+.detalle-header .categoria-tag {
+    display: inline-block;
+    padding: 5px 12px;
+    background: rgba(42, 157, 143, 0.1);
+    color: var(--primario);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+}
+
+.detalle-titulo {
+    font-size: 2.2rem;
+    color: var(--oscuro);
+    margin-bottom: 10px;
+    line-height: 1.2;
+}
+
+.detalle-taller {
+    color: #636e72;
+    font-size: 1rem;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detalle-descripcion {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+/* Caja de Compra Estándar */
+.compra-container {
+    background: #fafafa;
+    padding: 25px;
+    border-radius: 16px;
+    border: 1px solid var(--borde);
+    margin-top: auto; /* Empuja hacia abajo */
+}
+
+.precio-grande {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--oscuro);
+    margin-bottom: 20px;
+}
+
+/* Responsive para celulares */
+@media (max-width: 768px) {
+    .detalle-card {
+        grid-template-columns: 1fr;
+    }
+    .detalle-info {
+        padding: 30px;
+    }
+}
+
+/* Barra de Navegación Profesional */
+nav {
+    background: var(--blanco);
+    padding: 15px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* Sombra sutil */
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-logo {
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--primario);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: var(--texto);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav-link:hover {
+    color: var(--primario);
+}
+
+/* Botón especial para Cerrar Sesión */
+.nav-link-logout {
+    color: #e76f51;
+    border: 1.5px solid #e76f51;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.nav-link-logout:hover {
+    background: #e76f51;
+    color: white;
+}

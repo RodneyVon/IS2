@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= producto.nombre %> - Detalle</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+    <a href="/catalogo" class="nav-logo">
+        <span>✨</span> Marketplace
+    </a>
+    
+    <div class="nav-links">
+        <a href="/catalogo" class="nav-link">Inicio</a>
+        
+        <a href="/mis-productos" class="nav-link">Mi Panel</a>
+        
+        <a href="/perfil" class="nav-link">Mi Perfil</a>
+        
+        <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
+    </div>
+</nav>
+
+    <div class="detalle-wrapper">
+        <article class="detalle-card">
+            <div class="detalle-visual">
+                🏺
+            </div>
+
+            <div class="detalle-info">
+                <header class="detalle-header">
+                    <span class="categoria-tag"><%= producto.categoria || 'Artesanía' %></span>
+                    <h1 class="detalle-titulo"><%= producto.nombre %></h1>
+                    <div class="detalle-taller">
+                        <span>👤</span> Por: <strong><%= producto.taller_nombre %></strong>
+                    </div>
+                </header>
+
+                <div class="detalle-descripcion">
+                    <%= producto.descripcion %>
+                </div>
+
+                <% if(producto.variantes) { %>
+                    <div style="margin-bottom: 30px;">
+                        <h4 style="font-size: 0.9rem; color: #333; margin-bottom: 8px;">Opciones disponibles:</h4>
+                        <p style="color: #636e72; font-size: 0.95rem;"><%= producto.variantes %></p>
+                    </div>
+                <% } %>
+
+                <div class="compra-container">
+                    <div class="precio-grande">₲<%= producto.precio %></div>
+                    
+                    <div class="form-group">
+                        <label style="font-size: 0.85rem;">Cantidad a pedir:</label>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <input type="number" id="cantidad" value="1" min="1" max="<%= producto.stock %>" 
+                                   style="width: 80px; margin: 0; text-align: center;">
+                            
+                            <button class="btn-login" onclick="agregarAlCarrito()" style="margin: 0; flex: 1;">
+                                🛒 Añadir <span id="display-cantidad">1</span> al Carrito
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <p style="margin-top: 15px; font-size: 0.8rem; color: #999;">
+                        ✅ Stock disponible: <%= producto.stock %> unidades
+                    </p>
+                </div>
+
+                <a href="/catalogo" class="btn-secundario" style="margin-top: 20px; border: none; font-size: 0.85rem;">
+                    ← Seguir explorando la galería
+                </a>
+            </div>
+        </article>
+    </div>
+
+    <script>
+        const inputCant = document.getElementById('cantidad');
+        const displayCant = document.getElementById('display-cantidad');
+
+        inputCant.addEventListener('input', () => {
+            let valor = parseInt(inputCant.value);
+            let max = parseInt(inputCant.max);
+            if (valor > max) inputCant.value = max;
+            if (valor < 1 || isNaN(valor)) inputCant.value = 1;
+            displayCant.textContent = inputCant.value;
+        });
+
+        function agregarAlCarrito() {
+            alert('¡Producto añadido! Cantidad: ' + inputCant.value);
+        }
+    </script>
+</body>
+</html>

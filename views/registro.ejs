@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Cuenta - Marketplace</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h2>🌿 Únete a nosotros</h2>
+            <p class="subtitle">Crea tu cuenta para empezar a comprar o vender</p>
+
+            <form action="/registro" method="POST">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" name="nombre" placeholder="Ej: Juan Pérez" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" name="email" placeholder="ejemplo@correo.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" name="password" placeholder="Mínimo 6 caracteres" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de Cuenta</label>
+                    <select name="rol" required>
+                        <option value="cliente">Quiero Comprar (Cliente)</option>
+                        <option value="artesano">Quiero Vender (Artesano)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-login">Crear Mi Cuenta</button>
+            </form>
+
+            <div class="auth-footer">
+                ¿Ya tienes una cuenta? <a href="/login">Inicia sesión aquí</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

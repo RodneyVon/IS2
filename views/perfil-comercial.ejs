@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Mi Perfil Comercial</title>
+    <%- include('partials/head') %>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-7">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h2 class="fw-bold mb-2">Configuración de mi Taller</h2>
+                        <p class="text-muted mb-4">Esta información será pública para tus clientes.</p>
+
+                        <form action="/perfil-comercial" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Nombre Comercial del Taller</label>
+                                <input type="text" name="nombre_taller" class="form-control" 
+                                       value="<%= perfil.nombre_taller || '' %>" placeholder="Ej: Cerámicas del Sol">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Historia / Descripción del Taller</label>
+                                <textarea name="descripcion_taller" class="form-control" rows="4" 
+                                          placeholder="Cuéntale a tus clientes quién eres y cómo creas tus artesanías..."><%= perfil.descripcion_taller || '' %></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Contacto Público (WhatsApp/Instagram)</label>
+                                <input type="text" name="contacto" class="form-control" 
+                                       value="<%= perfil.contacto || '' %>" placeholder="Ej: +595 981... / @mitaller">
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100 fw-bold py-2">Guardar Perfil Comercial</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
