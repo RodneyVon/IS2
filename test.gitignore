@@ -1,14 +1,7 @@
-# Carpetas y dependencias
 node_modules/
 evidencias/
-
-# Bases de datos (todas las variantes que uses)
 database.sqlite
 database.db
-
-# Archivos de configuración y sistema
+*.txt
 .env
 .DS_Store
-
-# Extensiones (El asterisco es clave)
-*.txt
