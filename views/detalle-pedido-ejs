@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle de Compra</title>
+    <link rel="stylesheet" href="/css/style.css"> <!-- Asegúrate de que la ruta sea correcta -->
+</head>
+<body>
+    <header>
+        <h1>Pedido #<%= pedido.id %></h1>
+    </header>
+
+    <main>
+        <section>
+            <h3>Información del Pedido</h3>
+            <p><strong>Fecha:</strong> <%= pedido.fecha %></p>
+            <p><strong>Estado:</strong> <%= pedido.estado %></p>
+            <p><strong>Método de Pago:</strong> <%= pedido.metodo_pago %></p>
+            <p><strong>Dirección de Envío:</strong> <%= pedido.direccion %></p>
+        </section>
+
+        <hr>
+
+        <section>
+            <h3>Productos Comprados</h3>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% productos.forEach(item => { %>
+                    <tr>
+                        <td><%= item.nombre %></td>
+                        <td><%= item.cantidad %></td>
+                        <td>$<%= item.precio_unitario %></td>
+                        <td>$<%= item.cantidad * item.precio_unitario %></td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            <h3>Total Pagado: $<%= pedido.total %></h3>
+        </section>
+
+        <br>
+        <a href="/mis-compras">Volver a mis compras</a>
+    </main>
+</body>
+</html>

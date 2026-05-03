@@ -130,7 +130,7 @@ app.get('/catalogo', verificarSesion, async (req, res) => {
     }
 });
 
-// RUTA CORREGIDA: Detalle de producto
+// Detalle de producto
 app.get('/producto/:id', verificarSesion, async (req, res) => {
     try {
         const producto = await db.get(`
@@ -242,7 +242,7 @@ app.post('/carrito/finalizar', verificarSesion, async (req, res) => {
     res.render('confirmacion', { pedidoId });
 });
 
-// RUTA CORREGIDA: Ver historial de compras del cliente
+//Ver historial de compras del cliente
 app.get('/mis-compras', verificarSesion, async (req, res) => {
     try {
         const pedidos = await db.all(`
@@ -252,5 +252,38 @@ app.get('/mis-compras', verificarSesion, async (req, res) => {
         res.render('mis-compras', { pedidos });
     } catch (error) {
         res.status(500).send("Error al cargar tus compras");
+    }
+});
+
+// Esta ruta nueva maneja el clic en un pedido específico
+app.get('/mis-compras/:id', verificarSesion, async (req, res) => {
+    try {
+        const pedidoId = req.params.id;
+        const usuarioId = req.session.usuario.id;
+
+        const pedido = await db.get(`
+            SELECT * FROM pedidos 
+            WHERE id = ? AND usuario_id = ?`, 
+            [pedidoId, usuarioId]
+        );
+
+        if (!pedido) {
+            return res.status(404).send("Pedido no encontrado");
+        }
+
+        // Cambiamos el nombre de la variable a 'detalles'
+        const detalles = await db.all(`
+            SELECT pd.*, p.nombre AS producto_nombre 
+            FROM pedido_detalles pd
+            JOIN productos p ON pd.producto_id = p.id
+            WHERE pd.pedido_id = ?`, 
+            [pedidoId]
+        );
+
+        // Pasamos 'detalles' a la vista
+        res.render('compra-detalle', { pedido, detalles }); 
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error al obtener el detalle de la compra");
     }
 });
