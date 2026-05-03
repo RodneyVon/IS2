@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Detalle de Compra</title>
-    <link rel="stylesheet" href="/css/style.css"> <!-- Asegúrate de que la ruta sea correcta -->
+    <link rel="stylesheet" href="/css/style.css"> 
 </head>
 <body>
     <header>
