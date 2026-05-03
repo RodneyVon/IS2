@@ -3,7 +3,9 @@ const session = require('express-session');
 const { setup } = require('./database');
 const app = express();
 
-// --- CONFIGURACIÓN ---
+// ==========================================
+// --- CONFIGURACIÓN Y MIDDLEWARES ---
+// ==========================================
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(express.json());
@@ -15,14 +17,31 @@ app.use(session({
     saveUninitialized: false
 }));
 
-// ==========================================
-// 1. MIDDLEWARE DE SEGURIDAD (EL GUARDIA)
-// ==========================================
-function verificarSesion(req, res, next) {
-    if (req.session.usuarioId) {
-        return next(); // Si hay sesión, adelante
+// Middleware global para que las vistas siempre tengan acceso al usuario y carrito
+app.use((req, res, next) => {
+    if (!req.session.carrito) {
+        req.session.carrito = [];
+    }
+    res.locals.carrito = req.session.carrito;
+    
+    if (req.session.usuario) {
+        res.locals.usuario = req.session.usuario;
+        res.locals.nombre = req.session.usuario.nombre;
+        res.locals.rol = req.session.usuario.rol;
     } else {
-        res.redirect('/login'); // Si no, al login
+        res.locals.usuario = null;
+        res.locals.nombre = null;
+        res.locals.rol = null;
+    }
+    next();
+});
+
+// Middleware de seguridad
+function verificarSesion(req, res, next) {
+    if (req.session.usuario && req.session.usuario.id) {
+        return next();
+    } else {
+        res.redirect('/login');
     }
 }
 
@@ -36,41 +55,35 @@ setup().then(database => {
 });
 
 // ==========================================
-// 2. RUTAS PÚBLICAS (Login y Registro)
+// 2. AUTENTICACIÓN
 // ==========================================
 
-app.get('/', (req, res) => {
-    if (req.session.usuarioId) return res.redirect('/perfil');
-    res.redirect('/login');
-});
+app.get('/', (req, res) => res.redirect('/catalogo'));
 
 app.get('/registro', (req, res) => res.render('registro'));
 
 app.post('/registro', async (req, res) => {
-    const { nombre, email, password, rol } = req.body;
+    const { nombre, email, password, rol, taller_nombre, bio } = req.body;
     try {
         await db.run(
-            'INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, ?)',
-            [nombre, email, password, rol || 'cliente']
+            `INSERT INTO usuarios (nombre, email, password, rol, taller_nombre, bio) 
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [nombre, email, password, rol || 'cliente', taller_nombre || null, bio || null]
         );
         res.redirect('/login');
     } catch (error) {
-        res.status(400).send("Error: El email ya existe.");
+        res.status(400).send("Error en el registro.");
     }
 });
 
-app.get('/login', (req, res) => res.render('login'));
+app.get('/login', (req, res) => res.render('login', { error: null }));
 
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
     const usuario = await db.get('SELECT * FROM usuarios WHERE email = ? AND password = ?', [email, password]);
 
     if (usuario) {
-        req.session.usuarioId = usuario.id;
-        req.session.nombre = usuario.nombre;
-        req.session.rol = usuario.rol;
-        
-        // Todos van al perfil primero para ver la bienvenida profesional
+        req.session.usuario = usuario; 
         res.redirect('/perfil');
     } else {
         res.render('login', { error: 'Credenciales incorrectas' });
@@ -85,104 +98,159 @@ app.get('/logout', (req, res) => {
 });
 
 // ==========================================
-// 3. RUTAS PROTEGIDAS (Usan verificarSesion)
+// 3. PERFIL Y CATÁLOGO
 // ==========================================
 
-// Perfil de Bienvenida
 app.get('/perfil', verificarSesion, (req, res) => {
     res.render('perfil', { 
-        nombre: req.session.nombre, 
-        rol: req.session.rol 
+        usuario: req.session.usuario,
+        nombre: req.session.usuario.nombre,
+        rol: req.session.usuario.rol
     });
 });
 
-// Catálogo Principal
 app.get('/catalogo', verificarSesion, async (req, res) => {
-    const { buscar, categoria } = req.query;
-    
-    let query = `
-        SELECT productos.*, usuarios.taller_nombre 
-        FROM productos 
-        JOIN usuarios ON productos.vendedor_id = usuarios.id 
-        WHERE 1=1
-    `;
-    let params = [];
-
-    if (buscar) {
-        query += ` AND (productos.nombre LIKE ? OR productos.descripcion LIKE ? OR productos.variantes LIKE ?)`;
-        const busquedaTerm = `%${buscar}%`;
-        params.push(busquedaTerm, busquedaTerm, busquedaTerm);
+    try {
+        const { buscar, categoria } = req.query;
+        let query = `SELECT productos.*, usuarios.taller_nombre FROM productos JOIN usuarios ON productos.vendedor_id = usuarios.id WHERE 1=1`;
+        let params = [];
+        if (buscar) {
+            query += ` AND (productos.nombre LIKE ? OR productos.descripcion LIKE ?)`;
+            params.push(`%${buscar}%`, `%${buscar}%`);
+        }
+        if (categoria) {
+            query += ` AND productos.categoria = ?`;
+            params.push(categoria);
+        }
+        const productos = await db.all(query, params);
+        const categorias = await db.all('SELECT DISTINCT categoria FROM productos');
+        res.render('catalogo', { productos, categorias, buscar, categoriaSeleccionada: categoria });
+    } catch (error) {
+        res.status(500).send("Error en el catálogo");
     }
-
-    if (categoria && categoria !== "") {
-        query += ` AND productos.categoria = ?`;
-        params.push(categoria);
-    }
-
-    const productos = await db.all(query, params);
-    const categorias = await db.all('SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL');
-
-    res.render('catalogo', { productos, categorias, buscar, categoriaSeleccionada: categoria });
 });
 
-// Detalle de un producto
+// RUTA CORREGIDA: Detalle de producto
 app.get('/producto/:id', verificarSesion, async (req, res) => {
-    const producto = await db.get(`
-        SELECT productos.*, usuarios.taller_nombre 
-        FROM productos 
-        JOIN usuarios ON productos.vendedor_id = usuarios.id 
-        WHERE productos.id = ?`, [req.params.id]);
-
-    if (!producto) return res.status(404).send("Producto no encontrado");
-    res.render('producto-detalle', { producto });
+    try {
+        const producto = await db.get(`
+            SELECT productos.*, usuarios.taller_nombre 
+            FROM productos 
+            JOIN usuarios ON productos.vendedor_id = usuarios.id 
+            WHERE productos.id = ?`, [req.params.id]);
+        
+        if (!producto) return res.status(404).send("Producto no encontrado");
+        res.render('producto-detalle', { producto });
+    } catch (error) {
+        res.status(500).send("Error al cargar el producto");
+    }
 });
 
 // ==========================================
-// 4. RUTAS DE ARTESANO (Protección Doble)
+// 4. VENTAS Y PRODUCTOS (ARTESANO)
 // ==========================================
+
+app.get('/ventas', verificarSesion, async (req, res) => {
+    if (req.session.usuario.rol !== 'artesano') return res.redirect('/catalogo');
+    const ventas = await db.all(`
+        SELECT ped.id, pd.cantidad, p.nombre AS producto_nombre, ped.estado, ped.fecha, u.nombre AS cliente_nombre, pd.precio_unitario
+        FROM pedido_detalles pd
+        JOIN productos p ON pd.producto_id = p.id
+        JOIN pedidos ped ON pd.pedido_id = ped.id
+        JOIN usuarios u ON ped.usuario_id = u.id
+        WHERE p.vendedor_id = ?
+        ORDER BY ped.fecha DESC
+    `, [req.session.usuario.id]);
+    res.render('mis-ventas', { ventas });
+});
+
+app.get('/mis-ventas', (req, res) => res.redirect('/ventas'));
+
+app.get('/ventas/editar/:id', verificarSesion, async (req, res) => {
+    const venta = await db.get(`
+        SELECT ped.id, p.nombre AS producto_nombre, ped.estado 
+        FROM pedidos ped
+        JOIN pedido_detalles pd ON ped.id = pd.pedido_id
+        JOIN productos p ON pd.producto_id = p.id
+        WHERE ped.id = ?
+    `, [req.params.id]);
+    res.render('editar-venta', { venta });
+});
+
+app.post('/ventas/actualizar-estado/:id', verificarSesion, async (req, res) => {
+    await db.run('UPDATE pedidos SET estado = ? WHERE id = ?', [req.body.estado, req.params.id]);
+    res.redirect('/ventas');
+});
 
 app.get('/mis-productos', verificarSesion, async (req, res) => {
-    if (req.session.rol !== 'artesano') return res.status(403).send("Acceso denegado");
-    
-    const misProductos = await db.all('SELECT * FROM productos WHERE vendedor_id = ?', [req.session.usuarioId]);
-    res.render('panel-artesano', { productos: misProductos });
-});
-
-app.post('/productos/nuevo', verificarSesion, async (req, res) => {
-    if (req.session.rol !== 'artesano') return res.send("No autorizado");
-    const { nombre, descripcion, precio, stock, categoria, variantes } = req.body;
-
-    await db.run(
-        'INSERT INTO productos (nombre, descripcion, precio, stock, categoria, variantes, vendedor_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [nombre, descripcion, precio, stock, categoria, variantes, req.session.usuarioId]
-    );
-    res.redirect('/mis-productos');
+    const productos = await db.all('SELECT * FROM productos WHERE vendedor_id = ?', [req.session.usuario.id]);
+    res.render('panel-artesano', { productos });
 });
 
 app.get('/productos/editar/:id', verificarSesion, async (req, res) => {
-    if (req.session.rol !== 'artesano') return res.redirect('/login');
-    const producto = await db.get('SELECT * FROM productos WHERE id = ? AND vendedor_id = ?', [req.params.id, req.session.usuarioId]);
-    if (!producto) return res.send("No tienes permiso.");
+    const producto = await db.get('SELECT * FROM productos WHERE id = ? AND vendedor_id = ?', [req.params.id, req.session.usuario.id]);
     res.render('editar-producto', { producto });
 });
 
 app.post('/productos/editar/:id', verificarSesion, async (req, res) => {
-    if (req.session.rol !== 'artesano') return res.send("No autorizado");
     const { nombre, descripcion, precio, stock, categoria, variantes } = req.body;
-    await db.run(
-        `UPDATE productos SET nombre=?, descripcion=?, precio=?, stock=?, categoria=?, variantes=? 
-         WHERE id=? AND vendedor_id=?`,
-        [nombre, descripcion, precio, stock, categoria, variantes, req.params.id, req.session.usuarioId]
-    );
+    await db.run(`UPDATE productos SET nombre=?, descripcion=?, precio=?, stock=?, categoria=?, variantes=? WHERE id=?`,
+        [nombre, descripcion, precio, stock, categoria, variantes, req.params.id]);
     res.redirect('/mis-productos');
 });
 
 // ==========================================
-// 5. RUTA DE ADMIN
+// 5. CARRITO Y COMPRAS (CLIENTE)
 // ==========================================
-app.get('/admin', verificarSesion, async (req, res) => {
-    if (req.session.rol !== 'admin') return res.send("Acceso denegado");
-    const usuarios = await db.all('SELECT id, nombre, email, rol FROM usuarios');
-    const total = await db.get('SELECT COUNT(*) as total FROM productos');
-    res.render('admin-panel', { usuarios, totalProductos: total.total }); // Asumiendo que crearás admin-panel.ejs
+
+app.post('/carrito/agregar/:id', verificarSesion, async (req, res) => {
+    const producto = await db.get('SELECT * FROM productos WHERE id = ?', [req.params.id]);
+    if (producto) {
+        req.session.carrito.push({ 
+            id: producto.id, 
+            nombre: producto.nombre, 
+            precio: parseFloat(producto.precio), 
+            cantidad: 1 
+        });
+    }
+    res.redirect('/catalogo');
+});
+
+app.get('/carrito', verificarSesion, (req, res) => {
+    let total = req.session.carrito.reduce((sum, item) => sum + (Number(item.precio) * Number(item.cantidad)), 0);
+    res.render('carrito', { items: req.session.carrito, total });
+});
+
+app.get('/checkout', verificarSesion, (req, res) => {
+    let total = req.session.carrito.reduce((sum, item) => sum + (Number(item.precio) * Number(item.cantidad)), 0);
+    res.render('checkout', { total });
+});
+
+app.post('/carrito/finalizar', verificarSesion, async (req, res) => {
+    const { direccion, telefono, metodo_pago } = req.body;
+    let total = req.session.carrito.reduce((sum, item) => sum + (Number(item.precio) * Number(item.cantidad)), 0);
+    
+    const result = await db.run(`INSERT INTO pedidos (usuario_id, total, estado, metodo_pago, direccion, telefono) VALUES (?, ?, ?, ?, ?, ?)`,
+        [req.session.usuario.id, total, 'pendiente', metodo_pago, direccion, telefono]);
+    
+    const pedidoId = result.lastID;
+    for (const item of req.session.carrito) {
+        await db.run('INSERT INTO pedido_detalles (pedido_id, producto_id, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+            [pedidoId, item.id, item.cantidad, item.precio]);
+    }
+    req.session.carrito = [];
+    res.render('confirmacion', { pedidoId });
+});
+
+// RUTA CORREGIDA: Ver historial de compras del cliente
+app.get('/mis-compras', verificarSesion, async (req, res) => {
+    try {
+        const pedidos = await db.all(`
+            SELECT * FROM pedidos 
+            WHERE usuario_id = ? 
+            ORDER BY fecha DESC`, [req.session.usuario.id]);
+        res.render('mis-compras', { pedidos });
+    } catch (error) {
+        res.status(500).send("Error al cargar tus compras");
+    }
 });
