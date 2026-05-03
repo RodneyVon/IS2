@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis Ventas - Panel Artesano</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Unos estilos rápidos para que el estado se vea como una etiqueta */
+        .estado-texto {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: capitalize;
+            background: #f0f0f0;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .btn-editar {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.75rem;
+        }
+        .btn-editar:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/catalogo" class="nav-logo"><span>✨</span> Marketplace</a>
+        <div class="nav-links">
+            <a href="/mis-productos" class="nav-link">Mis Productos</a>
+            <a href="/perfil" class="nav-link">Mi Perfil</a>
+        </div>
+    </nav>
+
+    <div class="catalogo-container">
+        <header style="margin-bottom: 30px;">
+            <h1>📈 Registro de Ventas</h1>
+            <p>Aquí puedes ver quién ha comprado tus artesanías y contactarlos.</p>
+        </header>
+
+        <table style="width: 100%; background: white; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <thead style="background: var(--oscuro); color: white;">
+                <tr>
+                    <th style="padding: 15px; text-align: left;">Fecha</th>
+                    <th style="padding: 15px; text-align: left;">Producto</th>
+                    <th style="padding: 15px; text-align: center;">Cant.</th>
+                    <th style="padding: 15px; text-align: left;">Cliente</th>
+                    <th style="padding: 15px; text-align: right;">Total</th>
+                    <th style="padding: 15px; text-align: center;">Estado del Pedido</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (ventas.length > 0) { %>
+                    <% ventas.forEach(venta => { %>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 15px; font-size: 0.85rem;"><%= venta.fecha %></td>
+                            <td style="padding: 15px;"><strong><%= venta.producto_nombre %></strong></td>
+                            <td style="padding: 15px; text-align: center;"><%= venta.cantidad %></td>
+                            <td style="padding: 15px;">
+                                <%= venta.cliente_nombre %><br>
+                                <small style="color: #666;"><%= venta.cliente_email %></small>
+                            </td>
+                            <td style="padding: 15px; text-align: right; font-weight: bold;">
+                                ₲<%= venta.cantidad * venta.precio_unitario %>
+                            </td>
+
+                            <!-- ESTA ES LA SECCIÓN QUE CAMBIAMOS -->
+                            <td style="padding: 15px; text-align: center;">
+                                <div class="estado-texto">
+                                    <%= venta.estado %>
+                                </div>
+                                <br>
+                                <a href="/ventas/editar/<%= venta.id %>" class="btn-editar">
+                                    ✏️ Editar Estado
+                                </a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" style="padding: 30px; text-align: center; color: #999;">Aún no has realizado ventas. ¡Sigue promocionando tus productos!</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

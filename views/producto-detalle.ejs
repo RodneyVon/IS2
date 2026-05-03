@@ -8,20 +8,17 @@
 </head>
 <body>
     <nav>
-    <a href="/catalogo" class="nav-logo">
-        <span>✨</span> Marketplace
-    </a>
-    
-    <div class="nav-links">
-        <a href="/catalogo" class="nav-link">Inicio</a>
+        <a href="/catalogo" class="nav-logo">
+            <span>✨</span> Marketplace
+        </a>
         
-        <a href="/mis-productos" class="nav-link">Mi Panel</a>
-        
-        <a href="/perfil" class="nav-link">Mi Perfil</a>
-        
-        <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
-    </div>
-</nav>
+        <div class="nav-links">
+            <a href="/catalogo" class="nav-link">Inicio</a>
+            <a href="/mis-productos" class="nav-link">Mi Panel</a>
+            <a href="/perfil" class="nav-link">Mi Perfil</a>
+            <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
+        </div>
+    </nav>
 
     <div class="detalle-wrapper">
         <article class="detalle-card">
@@ -52,24 +49,33 @@
                 <div class="compra-container">
                     <div class="precio-grande">₲<%= producto.precio %></div>
                     
-                    <div class="form-group">
-                        <label style="font-size: 0.85rem;">Cantidad a pedir:</label>
-                        <div style="display: flex; gap: 10px; margin-top: 5px;">
-                            <input type="number" id="cantidad" value="1" min="1" max="<%= producto.stock %>" 
-                                   style="width: 80px; margin: 0; text-align: center;">
-                            
-                            <button class="btn-login" onclick="agregarAlCarrito()" style="margin: 0; flex: 1;">
-                                🛒 Añadir <span id="display-cantidad">1</span> al Carrito
-                            </button>
+                    <!-- FORMULARIO DE COMPRA: Envía los datos a la ruta de agregar al carrito -->
+                    <form action="/carrito/agregar/<%= producto.id %>" method="POST">
+                        <div class="form-group">
+                            <label style="font-size: 0.85rem;">Cantidad a pedir:</label>
+                            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                <!-- El name="cantidad" es lo que recibe el servidor en req.body.cantidad -->
+                                <input type="number" 
+                                       name="cantidad" 
+                                       id="cantidad" 
+                                       value="1" 
+                                       min="1" 
+                                       max="<%= producto.stock %>" 
+                                       style="width: 80px; margin: 0; text-align: center;">
+                                
+                                <button type="submit" class="btn-login" style="margin: 0; flex: 1;">
+                                    🛒 Añadir <span id="display-cantidad">1</span> al Carrito
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    </form>
                     
                     <p style="margin-top: 15px; font-size: 0.8rem; color: #999;">
                         ✅ Stock disponible: <%= producto.stock %> unidades
                     </p>
                 </div>
 
-                <a href="/catalogo" class="btn-secundario" style="margin-top: 20px; border: none; font-size: 0.85rem;">
+                <a href="/catalogo" class="btn-secundario" style="margin-top: 20px; border: none; font-size: 0.85rem; text-decoration: none; display: inline-block;">
                     ← Seguir explorando la galería
                 </a>
             </div>
@@ -80,17 +86,16 @@
         const inputCant = document.getElementById('cantidad');
         const displayCant = document.getElementById('display-cantidad');
 
+        // Este script actualiza el número que se ve dentro del botón en tiempo real
         inputCant.addEventListener('input', () => {
             let valor = parseInt(inputCant.value);
             let max = parseInt(inputCant.max);
+            
             if (valor > max) inputCant.value = max;
             if (valor < 1 || isNaN(valor)) inputCant.value = 1;
+            
             displayCant.textContent = inputCant.value;
         });
-
-        function agregarAlCarrito() {
-            alert('¡Producto añadido! Cantidad: ' + inputCant.value);
-        }
     </script>
 </body>
 </html>

@@ -30,10 +30,23 @@
 
                 <div class="form-group">
                     <label>Tipo de Cuenta</label>
-                    <select name="rol" required>
+                    <select name="rol" id="rolSelect" required onchange="toggleArtesanoFields()">
                         <option value="cliente">Quiero Comprar (Cliente)</option>
                         <option value="artesano">Quiero Vender (Artesano)</option>
                     </select>
+                </div>
+
+                <!-- SECCIÓN DINÁMICA: Solo para Artesanos -->
+                <div id="camposArtesano" style="display: none; border-left: 3px solid #2ecc71; padding-left: 15px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label>Nombre de tu Taller / Tienda</label>
+                        <input type="text" name="taller_nombre" id="taller_nombre" placeholder="Ej: Arte en Madera López">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Historia de tu Taller (Bio)</label>
+                        <textarea name="bio" id="bio" placeholder="Cuéntanos un poco sobre lo que haces..." style="width: 100%; min-height: 80px;"></textarea>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn-login">Crear Mi Cuenta</button>
@@ -44,5 +57,22 @@
             </div>
         </div>
     </div>
+
+    <!-- SCRIPT PARA MOSTRAR/OCULTAR CAMPOS -->
+    <script>
+        function toggleArtesanoFields() {
+            const rolSelect = document.getElementById('rolSelect');
+            const camposArtesano = document.getElementById('camposArtesano');
+            const tallerInput = document.getElementById('taller_nombre');
+            
+            if (rolSelect.value === 'artesano') {
+                camposArtesano.style.display = 'block';
+                tallerInput.setAttribute('required', 'true'); // Hacerlo obligatorio si es artesano
+            } else {
+                camposArtesano.style.display = 'none';
+                tallerInput.removeAttribute('required'); // No es obligatorio para clientes
+            }
+        }
+    </script>
 </body>
 </html>

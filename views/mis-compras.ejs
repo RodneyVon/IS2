@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Compras - Marketplace</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .pedido-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid #3498db;
+        }
+        .estado-tag {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .estado-pagado { background: #eafaf1; color: #27ae60; }
+        .estado-pendiente { background: #fff9e6; color: #f1c40f; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/catalogo" class="nav-logo"><span>✨</span> Marketplace</a>
+        <div class="nav-links">
+            <a href="/catalogo" class="nav-link">Catálogo</a>
+            <a href="/perfil" class="nav-link">Mi Perfil</a>
+            <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <div class="catalogo-container">
+        <header style="margin-bottom: 30px;">
+            <h1 style="font-size: 2rem; color: var(--oscuro);">Mis Compras</h1>
+            <p style="color: #636e72;">Historial de pedidos realizados en la plataforma.</p>
+        </header>
+
+        <% if (pedidos.length > 0) { %>
+            <% pedidos.forEach(pedido => { %>
+                <div class="pedido-card">
+                    <div>
+                        <h3 style="margin: 0; color: #2d3436;">Pedido #<%= pedido.id %></h3>
+                        <p style="margin: 5px 0; color: #636e72; font-size: 0.9rem;">
+                            Fecha: <%= pedido.fecha %> | <%= pedido.total_articulos %> artículos
+                        </p>
+                        <strong style="color: #2d3436; font-size: 1.1rem;">Total: ₲<%= pedido.total %></strong>
+                    </div>
+                    
+                    <div style="text-align: right;">
+                        <span class="estado-tag <%= pedido.estado === 'pagado' ? 'estado-pagado' : 'estado-pendiente' %>">
+                            <%= pedido.estado %>
+                        </span>
+                        <div style="margin-top: 10px;">
+                            <a href="/mis-compras/<%= pedido.id %>" style="color: #3498db; text-decoration: none; font-weight: bold;">
+                                🔍 Ver detalles del pedido
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div style="text-align: center; padding: 50px; background: white; border-radius: 12px;">
+                <p style="color: #999;">Aún no has realizado ninguna compra.</p>
+                <a href="/catalogo" class="btn-login" style="display: inline-block; width: auto; padding: 10px 25px; text-decoration: none;">Ir a comprar</a>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

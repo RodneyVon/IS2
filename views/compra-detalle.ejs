@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle de Compra #<%= pedido ? pedido.id : 'N/A' %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/catalogo" class="nav-logo"><span>✨</span> Marketplace</a>
+        <div class="nav-links">
+            <a href="/mis-compras" class="nav-link">Volver a Mis Compras</a>
+        </div>
+    </nav>
+
+    <div class="catalogo-container">
+        <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <% if (pedido) { %>
+                <header style="border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px;">
+                    <h1 style="margin: 0;">Resumen del Pedido #<%= pedido.id %></h1>
+                    <!-- Agregamos una validación para la fecha -->
+                    <p style="color: #666;">Realizado el: <%= pedido.fecha || 'Fecha no disponible' %></p>
+                    
+                    <span style="background: #eafaf1; color: #27ae60; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+                        <!-- Usamos una validación para evitar el error de toUpperCase -->
+                        ESTADO: <%= pedido.estado ? pedido.estado.toUpperCase() : 'PROCESANDO' %>
+                    </span>
+                </header>
+
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="text-align: left; border-bottom: 2px solid #eee;">
+                            <th style="padding: 10px;">Producto</th>
+                            <th style="padding: 10px;">Vendedor</th>
+                            <th style="padding: 10px;">Cant.</th>
+                            <th style="padding: 10px; text-align: right;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (detalles && detalles.length > 0) { %>
+                            <% detalles.forEach(item => { %>
+                                <tr style="border-bottom: 1px solid #f9f9f9;">
+                                    <td style="padding: 15px;"><strong><%= item.producto_nombre || 'Producto' %></strong></td>
+                                    <td style="padding: 15px;"><%= item.vendedor_nombre || 'N/A' %></td>
+                                    <td style="padding: 15px;"><%= item.cantidad %></td>
+                                    <td style="padding: 15px; text-align: right;">₲<%= (item.precio_unitario * item.cantidad).toLocaleString() %></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr><td colspan="4" style="text-align: center; padding: 20px;">No hay detalles para este pedido.</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 30px; text-align: right; border-top: 2px solid #eee; padding-top: 20px;">
+                    <h2 style="margin: 0;">Total Pagado: ₲<%= (pedido.total || 0).toLocaleString() %></h2>
+                    <p style="color: #999; font-size: 0.8rem;">Método de pago: <%= pedido.metodo_pago %></p>
+                </div>
+            <% } else { %>
+                <div style="text-align: center;">
+                    <h2>No se pudo cargar la información del pedido.</h2>
+                    <a href="/mis-compras">Volver al listado</a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>

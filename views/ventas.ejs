@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Ventas - Marketplace</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/catalogo" class="nav-logo"><span>✨</span> Marketplace</a>
+        <div class="nav-links">
+            <a href="/catalogo" class="nav-link">Inicio</a>
+            <a href="/mis-productos" class="nav-link">Mi Panel</a>
+            <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <div class="catalogo-container">
+        <header style="margin-bottom: 30px;">
+            <h1>📦 Gestión de Ventas</h1>
+            <p style="color: #636e72;">Administra tus pedidos recibidos y mantén informados a tus clientes.</p>
+        </header>
+
+        <% if (ventas && ventas.length > 0) { %>
+            <div class="tabla-ventas-container">
+                <table class="tabla-ventas">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Cliente / Contacto</th>
+                            <th>Estado Actual</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% ventas.forEach(venta => { %>
+                            <tr>
+                                <td><%= new Date(venta.fecha).toLocaleDateString() %></td>
+                                <td style="font-weight: bold;"><%= venta.nombre_producto %></td>
+                                <td>x<%= venta.cantidad %></td>
+                                <td>
+                                    <div style="font-size: 0.85rem; line-height: 1.4;">
+                                        <strong>Dir:</strong> <%= venta.direccion %><br>
+                                        <strong>Tel:</strong> <%= venta.telefono %>
+                                    </div>
+                                </td>
+                                <td>
+                                    <!-- El data-estado sirve para que el CSS le ponga el color -->
+                                    <span class="badge-estado" data-estado="<%= venta.estado_general %>">
+                                        <%= venta.estado_general.toUpperCase() %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <form action="/ventas/actualizar-estado" method="POST" class="form-actualizar-estado">
+                                        <input type="hidden" name="pedidoId" value="<%= venta.pedido_id %>">
+                                        <select name="nuevoEstado" class="select-estado">
+                                            <option value="pendiente" <%= venta.estado_general === 'pendiente' ? 'selected' : '' %>>Pendiente</option>
+                                            <option value="enviado" <%= venta.estado_general === 'enviado' ? 'selected' : '' %>>Enviado</option>
+                                            <option value="entregado" <%= venta.estado_general === 'entregado' ? 'selected' : '' %>>Entregado</option>
+                                        </select>
+                                        <button type="submit" class="btn-actualizar">Actualizar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div style="text-align: center; padding: 80px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div style="font-size: 3rem; margin-bottom: 20px;">📭</div>
+                <h2 style="color: #2d3436;">Aún no hay ventas</h2>
+                <p style="color: #636e72;">Cuando los clientes compren tus productos, aparecerán aquí.</p>
+                <a href="/catalogo" class="btn-login" style="display: inline-block; margin-top: 20px; text-decoration: none;">Ir al catálogo</a>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

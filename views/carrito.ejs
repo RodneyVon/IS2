@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Carrito - Marketplace</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- 1. Navegación -->
+    <nav>
+        <a href="/catalogo" class="nav-logo">
+            <span>✨</span> Marketplace
+        </a>
+        <div class="nav-links">
+            <a href="/catalogo" class="nav-link">Continuar Comprando</a>
+            <a href="/perfil" class="nav-link">Mi Perfil</a>
+            <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <div class="catalogo-container">
+        <header style="margin-bottom: 30px;">
+            <h1 style="font-size: 2rem; color: var(--oscuro);">Tu Carrito de Compras</h1>
+            <p style="color: #636e72;">Revisa tus piezas seleccionadas antes de finalizar.</p>
+        </header>
+
+        <% if (items && items.length > 0) { %>
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #eee; text-align: left;">
+                            <th style="padding: 12px;">Producto</th>
+                            <th style="padding: 12px;">Precio</th>
+                            <th style="padding: 12px;">Cantidad</th>
+                            <th style="padding: 12px;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% items.forEach(item => { %>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 12px; font-weight: 600;"><%= item.nombre %></td>
+                                <td style="padding: 12px;">₲<%= item.precio.toLocaleString() %></td>
+                                <td style="padding: 12px;"><%= item.cantidad %></td>
+                                <td style="padding: 12px; font-weight: bold;">₲<%= (item.precio * item.cantidad).toLocaleString() %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+
+                <div style="text-align: right; padding: 20px; border-top: 2px solid #eee;">
+                    <h2 style="color: var(--oscuro); margin-bottom: 20px;">Total a pagar: ₲<%= total.toLocaleString() %></h2>
+                    
+                    <!-- BOTÓN MODIFICADO: Ahora lleva al Checkout en lugar de procesar directo -->
+                    <div style="margin-top: 20px;">
+                        <a href="/checkout" class="btn-login" style="background-color: #27ae60; text-decoration: none; display: inline-block; width: auto; padding: 15px 40px; font-size: 1.1rem; color: white; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);">
+                            📦 Continuar al Envío y Pago
+                        </a>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <a href="/catalogo" style="color: #636e72; text-decoration: none; font-size: 0.9rem;">
+                            ← Volver al catálogo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
+            <div style="text-align: center; padding: 80px 20px; background: white; border-radius: 12px;">
+                <span style="font-size: 4rem;">🛒</span>
+                <p style="color: #999; font-size: 1.2rem; margin-top: 20px;">Tu carrito está vacío actualmente.</p>
+                <a href="/catalogo" class="btn-login" style="display: inline-block; margin-top: 20px; text-decoration: none; width: auto; padding: 10px 30px;">
+                    Volver al catálogo
+                </a>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

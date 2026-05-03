@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido Confirmado - Marketplace</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .conf-card {
+            background: white;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top: 8px solid #27ae60;
+        }
+        .check-icon {
+            font-size: 50px;
+            color: #27ae60;
+            background: #eafaf1;
+            width: 100px;
+            height: 100px;
+            line-height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+        }
+        .pedido-numero {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #2d3436;
+            margin: 20px 0;
+            border: 1px dashed #ced4da;
+        }
+        .instrucciones {
+            text-align: left;
+            background: #fff9e6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border-left: 5px solid #f1c40f;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/catalogo" class="nav-logo">
+            <span>✨</span> Marketplace
+        </a>
+    </nav>
+
+    <div class="container">
+        <div class="conf-card">
+            <div class="check-icon">✓</div>
+            <h1 style="color: #2d3436;">¡Pedido Recibido!</h1>
+            <p style="color: #636e72;">Gracias por apoyar lo hecho a mano. Tu solicitud ha sido procesada con éxito.</p>
+
+            <div class="pedido-numero">
+                <strong>ID DE PEDIDO:</strong> #<%= pedidoId %>
+            </div>
+
+            <div class="instrucciones">
+                <h4 style="margin-top: 0;">📌 Próximos pasos:</h4>
+                <ul style="padding-left: 20px; color: #555; font-size: 0.9rem;">
+                    <li>El artesano revisará tu pedido en las próximas 24 horas.</li>
+                    <li>Te contactaremos vía email para coordinar la entrega.</li>
+                    <li>Puedes revisar el estado de tus compras en tu perfil.</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center;">
+                <a href="/catalogo" class="btn-secundario" style="text-decoration: none; padding: 12px 20px;">
+                    Volver a la tienda
+                </a>
+                <button onclick="window.print()" class="btn-secundario" style="background: #eee; border: none; cursor: pointer;">
+                    🖨️ Imprimir Comprobante
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
