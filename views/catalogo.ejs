@@ -1,222 +1,126 @@
 <!DOCTYPE html>
-
 <html lang="es">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Galería de Artesanías</title>
-
     <link rel="stylesheet" href="/css/style.css">
-
 </head>
 
 <body>
-
-
     <nav>
-
         <a href="/catalogo" class="nav-logo">
-
             <span>✨</span> Marketplace
-
         </a>
-
-       
-
         <div class="nav-links">
-
             <a href="/catalogo" class="nav-link">Inicio</a>
-
-           
-
-            <!-- [NUEVO] ENLACE AL CARRITO CON CONTADOR DINÁMICO -->
-
             <a href="/carrito" class="nav-link" style="position: relative;">
-
                 🛒 Carrito
-
                 <% if (carrito.length > 0) { %>
-
                     <span style="background: var(--primario); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; position: absolute; top: -5px; right: -10px;">
-
                         <%= carrito.length %>
-
                     </span>
-
                 <% } %>
-
             </a>
-
             <% if (usuario) { %>
-
-    <% if (usuario.rol === 'artesano') { %>
-
-        <a href="/ventas" class="nav-link" style="color: #e67e22; font-weight: bold;">📦 Mis Ventas</a>
-
-    <% } %>
-
-<% } %>
-
+                <% if (usuario.rol === 'artesano') { %>
+                    <a href="/ventas" class="nav-link" style="color: #e67e22; font-weight: bold;">📦 Mis Ventas</a>
+                <% } %>
+            <% } %>
             <a href="/mis-productos" class="nav-link">Mi Panel</a>
-
             <a href="/perfil" class="nav-link">Mi Perfil</a>
-
             <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
-
         </div>
-
     </nav>
 
+    <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+        <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; border: 1px solid #f5c6cb; margin: 20px auto; max-width: 800px; text-align: center; font-weight: bold;">
+            ⚠️ <%= error_msg %>
+        </div>
+    <% } %>
 
+    <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+        <div id="toast-notificacion" style="position: fixed; top: 100px; right: 20px; background-color: #2ecc71; color: white; padding: 16px 28px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 9999; display: flex; align-items: center; gap: 10px; font-weight: 500; animation: slideIn 0.4s ease-out forwards;">
+            <span>✅</span> <%= success_msg %>
+        </div>
+
+        <script>
+            setTimeout(() => {
+                const toast = document.getElementById('toast-notificacion');
+                if (toast) {
+                    toast.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+                    toast.style.opacity = "0";
+                    toast.style.transform = "translateX(100px)";
+                    setTimeout(() => toast.remove(), 500);
+                }
+            }, 3000);
+        </script>
+
+        <style>
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        </style>
+    <% } %>
 
     <div class="catalogo-container">
-
         <header style="margin-bottom: 40px;">
-
             <h1 style="font-size: 2.5rem; color: var(--oscuro);">Descubre piezas únicas</h1>
-
             <p style="color: #636e72;">Artesanías hechas a mano por maestros de todo el país.</p>
-
         </header>
 
-
-
-        <!-- (Sección del buscador se mantiene igual...) -->
-
         <section class="buscador-seccion">
-
             <form action="/catalogo" method="GET" class="form-buscar">
-
                 <div style="flex: 2;">
-
                     <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; display: block;">¿Qué buscas?</label>
-
                     <input type="text" name="buscar" placeholder="Ej: Cerámica, madera, azul..." value="<%= buscar || '' %>">
-
                 </div>
-
-
-
                 <div style="flex: 1;">
-
                     <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; display: block;">Categoría</label>
-
                     <select name="categoria">
-
                         <option value="">Todas</option>
-
                         <% categorias.forEach(cat => { %>
-
                             <option value="<%= cat.categoria %>" <%= (typeof categoriaSeleccionada !== 'undefined' && categoriaSeleccionada === cat.categoria) ? 'selected' : '' %>>
-
                                 <%= cat.categoria %>
-
                             </option>
-
                         <% }) %>
-
                     </select>
-
                 </div>
-
-
-
                 <button type="submit" class="btn-login" style="width: auto; padding: 12px 30px;">🔍 Buscar</button>
-
             </form>
-
         </section>
 
-
-
         <main class="productos-grid">
-
             <% if (productos.length === 0) { %>
-
                 <div style="grid-column: 1/-1; text-align: center; padding: 60px;">
-
                     <p style="color: #999; font-size: 1.2rem;">No encontramos lo que buscas. Intenta con otros filtros.</p>
-
                 </div>
-
             <% } else { %>
-
                 <% productos.forEach(p => { %>
-
                     <article class="producto-card">
-
                         <span class="card-categoria"><%= p.categoria || 'Artesanía' %></span>
-
-                       
-
-                        <a href="/producto/<%= p.id %>" class="card-titulo">
-
-                            <%= p.nombre %>
-
-                        </a>
-
-
-
-                        <div class="card-taller">
-
-                            <span>🏠</span> <%= p.taller_nombre || 'Taller Artesanal' %>
-
-                        </div>
-
-
-
+                        <a href="/producto/<%= p.id %>" class="card-titulo"><%= p.nombre %></a>
+                        <div class="card-taller"><span>🏠</span> <%= p.taller_nombre || 'Taller Artesanal' %></div>
                         <p style="color: #636e72; font-size: 0.9rem; line-height: 1.4; flex-grow: 1;">
-
                             <%= p.descripcion.substring(0, 80) %><%= p.descripcion.length > 80 ? '...' : '' %>
-
                         </p>
-
-
-
                         <div class="card-precio">₲<%= p.precio %></div>
-
-
-
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; margin-bottom: 15px;">
-
                             <span style="font-size: 0.8rem; color: #999;">📦 Stock: <%= p.stock %></span>
-
                             <a href="/producto/<%= p.id %>" style="color: var(--primario); text-decoration: none; font-weight: bold; font-size: 0.9rem;">Ver más →</a>
-
                         </div>
-
-
-
-                        <!-- [NUEVO] BOTÓN PARA AÑADIR AL CARRITO -->
-
                         <form action="/carrito/agregar/<%= p.id %>" method="POST">
-
-                            <button type="submit" class="btn-login"
-
+                            <button type="submit" class="btn-login" 
                                     style="width: 100%; padding: 10px; background-color: <%= p.stock > 0 ? 'var(--oscuro)' : '#ccc' %>;"
-
                                     <%= p.stock <= 0 ? 'disabled' : '' %>>
-
                                 <%= p.stock > 0 ? '🛒 Añadir al Carrito' : 'Agotado' %>
-
                             </button>
-
                         </form>
-
                     </article>
-
                 <% }) %>
-
             <% } %>
-
         </main>
-
     </div>
-
 </body>
-
 </html>

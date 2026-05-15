@@ -5,7 +5,6 @@
     <title>Mis Ventas - Panel Artesano</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        /* Unos estilos rápidos para que el estado se vea como una etiqueta */
         .estado-texto {
             display: inline-block;
             padding: 4px 8px;
@@ -25,8 +24,46 @@
             border-radius: 4px;
             text-decoration: none;
             font-size: 0.75rem;
+            margin-bottom: 5px;
         }
         .btn-editar:hover { background: #2980b9; }
+
+        .btn-cancelar {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        .btn-cancelar:hover { background: #c0392b; }
+
+        .link-comprobante {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: #27ae60;
+            text-decoration: underline;
+        }
+
+        /* Estilos nuevos para los datos de contacto */
+        .info-contacto {
+            font-size: 0.8rem;
+            color: #555;
+            margin-top: 3px;
+        }
+        .etiqueta-direccion {
+            font-size: 0.75rem;
+            color: #2c3e50;
+            background: #fdf2e9;
+            padding: 4px;
+            border-radius: 4px;
+            border-left: 3px solid #e67e22;
+            margin-top: 6px;
+            display: block;
+            line-height: 1.2;
+        }
     </style>
 </head>
 <body>
@@ -41,7 +78,7 @@
     <div class="catalogo-container">
         <header style="margin-bottom: 30px;">
             <h1>📈 Registro de Ventas</h1>
-            <p>Aquí puedes ver quién ha comprado tus artesanías y contactarlos.</p>
+            <p>Aquí puedes ver quién ha comprado tus artesanías y gestionar los pedidos.</p>
         </header>
 
         <table style="width: 100%; background: white; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
@@ -50,41 +87,71 @@
                     <th style="padding: 15px; text-align: left;">Fecha</th>
                     <th style="padding: 15px; text-align: left;">Producto</th>
                     <th style="padding: 15px; text-align: center;">Cant.</th>
-                    <th style="padding: 15px; text-align: left;">Cliente</th>
+                    <th style="padding: 15px; text-align: left;">Cliente y Entrega</th>
                     <th style="padding: 15px; text-align: right;">Total</th>
-                    <th style="padding: 15px; text-align: center;">Estado del Pedido</th>
+                    <th style="padding: 15px; text-align: center;">Estado y Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (ventas.length > 0) { %>
                     <% ventas.forEach(venta => { %>
-                        <tr style="border-bottom: 1px solid #eee;">
+                        <tr style="border-bottom: 1px solid #eee; <%= venta.estado === 'cancelado' ? 'opacity: 0.6; background: #f9f9f9;' : '' %>">
                             <td style="padding: 15px; font-size: 0.85rem;"><%= venta.fecha %></td>
                             <td style="padding: 15px;"><strong><%= venta.producto_nombre %></strong></td>
                             <td style="padding: 15px; text-align: center;"><%= venta.cantidad %></td>
+                            
+                            <!-- COLUMNA DE CLIENTE ACTUALIZADA -->
                             <td style="padding: 15px;">
-                                <%= venta.cliente_nombre %><br>
-                                <small style="color: #666;"><%= venta.cliente_email %></small>
+                                <strong style="color: var(--oscuro);">👤 <%= venta.cliente_nombre %></strong>
+                                
+                                <div class="info-contacto">
+                                    📧 <a href="mailto:<%= venta.cliente_email %>" style="color: inherit; text-decoration: none;"><%= venta.cliente_email %></a>
+                                </div>
+                                
+                                <div class="info-contacto">
+                                    📞 <%= venta.telefono || 'Sin teléfono' %>
+                                </div>
+
+                                <div class="etiqueta-direccion">
+                                    📍 <strong>Envío:</strong> <%= venta.direccion || 'Retiro en local' %>
+                                </div>
                             </td>
+
                             <td style="padding: 15px; text-align: right; font-weight: bold;">
                                 ₲<%= venta.cantidad * venta.precio_unitario %>
                             </td>
 
-                            <!-- ESTA ES LA SECCIÓN QUE CAMBIAMOS -->
                             <td style="padding: 15px; text-align: center;">
                                 <div class="estado-texto">
                                     <%= venta.estado %>
                                 </div>
-                                <br>
-                                <a href="/ventas/editar/<%= venta.id %>" class="btn-editar">
-                                    ✏️ Editar Estado
-                                </a>
+                                
+                                <% if (venta.estado !== 'cancelado') { %>
+                                    <br>
+                                    <a href="/ventas/editar/<%= venta.pedido_id %>" class="btn-editar">
+                                        ✏️ Editar Estado
+                                    </a>
+
+                                    <form action="/ventas/cancelar/<%= venta.pedido_id %>" method="POST" onsubmit="return confirm('¿Seguro que quieres cancelar?')">
+                                        <button type="submit" class="btn-cancelar">
+                                            ❌ Cancelar Venta
+                                        </button>
+                                    </form>
+                                <% } else { %>
+                                    <br><strong style="color: #e74c3c; font-size: 0.8rem;">ANULADA</strong>
+                                <% } %>
+
+                                <% if (venta.comprobante_ruta) { %>
+                                    <a href="/uploads/<%= venta.comprobante_ruta %>" target="_blank" class="link-comprobante">
+                                        🖼️ Ver Comprobante
+                                    </a>
+                                <% } %>
                             </td>
                         </tr>
                     <% }) %>
                 <% } else { %>
                     <tr>
-                        <td colspan="6" style="padding: 30px; text-align: center; color: #999;">Aún no has realizado ventas. ¡Sigue promocionando tus productos!</td>
+                        <td colspan="6" style="padding: 30px; text-align: center; color: #999;">Aún no has realizado ventas.</td>
                     </tr>
                 <% } %>
             </tbody>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Pedido</title>
+    <link rel="stylesheet" href="/css/style.css"> 
+</head>
+<body>
+
+<main style="max-width: 800px; margin: 50px auto; padding: 20px; font-family: sans-serif; background: white; border-radius: 10px; shadow: 0 0 10px rgba(0,0,0,0.1);">
+    <h2 style="color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;">Finalizar Pedido</h2>
+    
+    <div style="display: flex; flex-wrap: wrap; gap: 30px; margin-top: 20px;">
+        
+        <div style="flex: 1; min-width: 300px;">
+            <h3 style="font-size: 1.1rem;">1. Realiza la transferencia</h3>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 5px solid #27ae60;">
+                
+                <% if (vendedor && vendedor.banco_nombre) { %>
+                    <p><strong>Banco:</strong> <%= vendedor.banco_nombre %></p>
+                    <p><strong>Titular:</strong> <%= vendedor.nombre_titular %></p>
+                    <p><strong>CI/RUC:</strong> <%= vendedor.titular_documento %></p>
+                    <p><strong>Nro de Cuenta:</strong> <%= vendedor.cuenta_numero %> (<%= vendedor.cuenta_tipo %>)</p>
+                    
+                    <% if (vendedor.alias_pago) { %>
+                        <p><strong>Alias:</strong> <%= vendedor.alias_pago %></p>
+                    <% } %>
+
+                <% } else { %>
+                    <p style="color: #e74c3c; font-weight: bold;">⚠️ El artesano aún no ha configurado sus datos de transferencia.</p>
+                    <p style="font-size: 0.8rem;">Por favor, contacta con el vendedor antes de pagar.</p>
+                <% } %>
+
+                <hr>
+                <p style="font-size: 1.2rem; color: #27ae60;"><strong>Total a transferir: ₲<%= total %></strong></p>
+            </div>
+        </div>
+
+        <div style="flex: 1; min-width: 300px;">
+            <h3 style="font-size: 1.1rem;">2. Sube tu comprobante</h3>
+            <form action="/carrito/finalizar" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
+                
+                <div>
+                    <label style="display:block; margin-bottom:5px;">Dirección de Envío:</label>
+                    <input type="text" name="direccion" required placeholder="Ej: Calle Mcal. Estigarribia 123" style="width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div>
+                    <label style="display:block; margin-bottom:5px;">Teléfono de contacto:</label>
+                    <input type="text" name="telefono" required placeholder="0981..." style="width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div>
+                    <label style="display:block; margin-bottom:5px;">Foto del Comprobante:</label>
+                    <input type="file" name="comprobante" accept="image/*" required>
+                </div>
+
+                <button type="submit" style="background: #27ae60; color: white; border: none; padding: 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px;">
+                    CONFIRMAR Y ENVIAR PEDIDO
+                </button>
+            </form>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

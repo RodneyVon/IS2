@@ -7,20 +7,26 @@ async function setup() {
         driver: sqlite3.Database
     });
 
-    // Tabla de Usuarios: Añadimos campos para el Perfil Comercial (HU15)
     await db.exec(`
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT,
-            email TEXT UNIQUE,
-            password TEXT,
-            rol TEXT DEFAULT 'cliente',
-            taller_nombre TEXT, -- Nombre de la tienda del artesano
-            bio TEXT            -- Descripción o historia del taller
-        )
-    `);
+    CREATE TABLE IF NOT EXISTS usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT,
+        email TEXT UNIQUE,
+        password TEXT,
+        rol TEXT DEFAULT 'cliente',
+        taller_nombre TEXT, 
+        bio TEXT,
+        -- Datos Bancarios para Artesanos --
+        banco_nombre TEXT,      -- Ej: Visión, Itaú, Continental
+        cuenta_tipo TEXT,       -- Ej: Ahorro, Corriente
+        cuenta_numero TEXT,     -- El número de cuenta real
+        nombre_titular TEXT,    -- [NUEVO] Nombre legal del dueño de la cuenta
+        titular_documento TEXT, -- CI o RUC del titular
+        alias_pago TEXT         -- Alias de transferencia (opcional)
+    )
+`);
 
-    // Tabla de Productos: Añadimos Variantes (HU12) y Categoría (HU4)
+    // Tabla de Productos:
     await db.exec(`
         CREATE TABLE IF NOT EXISTS productos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +43,7 @@ async function setup() {
 
     // --- NUEVAS TABLAS PARA EL SPRINT 3 ---
 
-    // 3. Tabla de Carrito: Para persistencia de compras no finalizadas (Punto 5)
+    // 3. Tabla de Carrito
     await db.exec(`
         CREATE TABLE IF NOT EXISTS carrito (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,34 +57,40 @@ async function setup() {
 
     // 4. Tabla de Pedidos
     await db.exec(`
-        CREATE TABLE IF NOT EXISTS pedidos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario_id INTEGER,
-            fecha TEXT DEFAULT CURRENT_TIMESTAMP,
-            total REAL,
-            estado TEXT DEFAULT 'pendiente', -- pendiente, pagado, enviado, entregado
-            metodo_pago TEXT,                -- efectivo, transferencia, tarjeta
-            direccion TEXT, 
-            telefono TEXT,  
-            FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
-        )
-    `);
+    CREATE TABLE IF NOT EXISTS pedidos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        usuario_id INTEGER,
+        fecha TEXT DEFAULT CURRENT_TIMESTAMP,
+        total REAL,
+        estado TEXT DEFAULT 'pendiente', 
+        metodo_pago TEXT,
+        comprobante_ruta TEXT, -- [NUEVO] Para guardar el nombre del archivo .jpg/.png
+        estado_pago TEXT DEFAULT 'verificación pendiente', -- [NUEVO] Control del artesano
+        direccion TEXT, 
+        telefono TEXT,  
+        FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
+    )
+`);
 
-    // 5. Detalle de Pedidos: Relación N:M entre Pedidos y Productos (Punto 6)
+    // 5. Detalle de Pedidos
     await db.exec(`
-        CREATE TABLE IF NOT EXISTS pedido_detalles (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            pedido_id INTEGER,
-            producto_id INTEGER,
-            cantidad INTEGER,
-            precio_unitario REAL, -- Guardamos el precio del momento de la compra
-            FOREIGN KEY(pedido_id) REFERENCES pedidos(id),
-            FOREIGN KEY(producto_id) REFERENCES productos(id)
-        )
-    `);
+    CREATE TABLE IF NOT EXISTS pedido_detalles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pedido_id INTEGER,
+        producto_id INTEGER,
+        vendedor_id INTEGER, 
+        cantidad INTEGER,
+        precio_unitario REAL, 
+        FOREIGN KEY(pedido_id) REFERENCES pedidos(id),
+        FOREIGN KEY(producto_id) REFERENCES productos(id),
+        FOREIGN KEY(vendedor_id) REFERENCES usuarios(id)
+    )
+`);
 
     console.log("Base de datos actualizada con campos para HU.");
     return db;
 }
 
 module.exports = { setup };
+
+

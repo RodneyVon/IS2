@@ -8,74 +8,90 @@
 </head>
 <body>
     <nav>
-        <a href="/catalogo" class="nav-logo">
-            <span>✨</span> Marketplace
-        </a>
-        
+        <a href="/catalogo" class="nav-logo"><span>✨</span> Marketplace</a>
         <div class="nav-links">
             <a href="/catalogo" class="nav-link">Inicio</a>
+            <a href="/carrito" class="nav-link" style="position: relative;">
+                🛒 Carrito
+                <% if (carrito && carrito.length > 0) { %>
+                    <span style="background: var(--primario); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; position: absolute; top: -5px; right: -10px;">
+                        <%= carrito.reduce((total, item) => total + item.cantidad, 0) %>
+                    </span>
+                <% } %>
+            </a>
+            <% if (usuario && usuario.rol === 'artesano') { %>
+                <a href="/ventas" class="nav-link" style="color: #e67e22; font-weight: bold;">📦 Mis Ventas</a>
+            <% } %>
             <a href="/mis-productos" class="nav-link">Mi Panel</a>
             <a href="/perfil" class="nav-link">Mi Perfil</a>
             <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
         </div>
     </nav>
 
+    <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+        <div id="toast-notificacion" style="position: fixed; top: 100px; right: 20px; background-color: #2ecc71; color: white; padding: 16px 28px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 9999; display: flex; align-items: center; gap: 10px; font-weight: 500; animation: slideIn 0.4s ease-out forwards;">
+            <span>✅</span> <%= success_msg %>
+        </div>
+        <script>
+            setTimeout(() => {
+                const toast = document.getElementById('toast-notificacion');
+                if (toast) {
+                    toast.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+                    toast.style.opacity = "0";
+                    toast.style.transform = "translateX(100px)";
+                    setTimeout(() => toast.remove(), 500);
+                }
+            }, 3000);
+        </script>
+        <style>@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }</style>
+    <% } %>
+
     <div class="detalle-wrapper">
         <article class="detalle-card">
-            <div class="detalle-visual">
-                🏺
-            </div>
-
+            <div class="detalle-visual">🏺</div>
             <div class="detalle-info">
                 <header class="detalle-header">
                     <span class="categoria-tag"><%= producto.categoria || 'Artesanía' %></span>
                     <h1 class="detalle-titulo"><%= producto.nombre %></h1>
-                    <div class="detalle-taller">
-                        <span>👤</span> Por: <strong><%= producto.taller_nombre %></strong>
-                    </div>
+                    <div class="detalle-taller"><span>👤</span> Por: <strong><%= producto.taller_nombre %></strong></div>
                 </header>
 
-                <div class="detalle-descripcion">
-                    <%= producto.descripcion %>
-                </div>
-
-                <% if(producto.variantes) { %>
-                    <div style="margin-bottom: 30px;">
-                        <h4 style="font-size: 0.9rem; color: #333; margin-bottom: 8px;">Opciones disponibles:</h4>
-                        <p style="color: #636e72; font-size: 0.95rem;"><%= producto.variantes %></p>
-                    </div>
-                <% } %>
+                <div class="detalle-descripcion"><%= producto.descripcion %></div>
 
                 <div class="compra-container">
-                    <div class="precio-grande">₲<%= producto.precio %></div>
+    <div class="precio-grande">₲<%= producto.precio %></div>
+    
+    <form action="/carrito/agregar/<%= producto.id %>" method="POST">
+        <div class="form-group">
+            <label style="font-size: 0.85rem;">Cantidad a pedir:</label>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
+                
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" name="cantidad" id="cantidad" value="1" min="1" max="<%= producto.stock %>" 
+                           style="width: 80px; text-align: center; border-radius: 8px; border: 1px solid #ccc;">
                     
-                    <!-- FORMULARIO DE COMPRA: Envía los datos a la ruta de agregar al carrito -->
-                    <form action="/carrito/agregar/<%= producto.id %>" method="POST">
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem;">Cantidad a pedir:</label>
-                            <div style="display: flex; gap: 10px; margin-top: 5px;">
-                                <!-- El name="cantidad" es lo que recibe el servidor en req.body.cantidad -->
-                                <input type="number" 
-                                       name="cantidad" 
-                                       id="cantidad" 
-                                       value="1" 
-                                       min="1" 
-                                       max="<%= producto.stock %>" 
-                                       style="width: 80px; margin: 0; text-align: center;">
-                                
-                                <button type="submit" class="btn-login" style="margin: 0; flex: 1;">
-                                    🛒 Añadir <span id="display-cantidad">1</span> al Carrito
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                    
-                    <p style="margin-top: 15px; font-size: 0.8rem; color: #999;">
-                        ✅ Stock disponible: <%= producto.stock %> unidades
-                    </p>
+                    <button type="submit" name="accion" value="carrito" class="btn-login" 
+                            style="margin: 0; flex: 1; background-color: #2c3e50; border: none; border-radius: 8px; cursor: pointer;">
+                        🛒 Añadir <span id="display-cantidad">1</span> al Carrito
+                    </button>
                 </div>
 
-                <a href="/catalogo" class="btn-secundario" style="margin-top: 20px; border: none; font-size: 0.85rem; text-decoration: none; display: inline-block;">
+                <button type="submit" name="accion" value="comprar" class="btn-login" 
+                        style="margin: 0; width: 100%; background-color: #e67e22; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; padding: 12px;">
+                    ⚡ Comprar ahora directamente
+                </button>
+
+            </div>
+        </div>
+    </form>
+    
+    <p style="margin-top: 15px; font-size: 0.8rem; color: #999;">
+        ✅ Stock disponible: <%= producto.stock %> unidades
+    </p>
+</div>
+
+                <a href="/catalogo" class="btn-secundario" style="margin-top: 20px; text-decoration: none; display: inline-block;">
                     ← Seguir explorando la galería
                 </a>
             </div>
@@ -85,15 +101,10 @@
     <script>
         const inputCant = document.getElementById('cantidad');
         const displayCant = document.getElementById('display-cantidad');
-
-        // Este script actualiza el número que se ve dentro del botón en tiempo real
         inputCant.addEventListener('input', () => {
             let valor = parseInt(inputCant.value);
-            let max = parseInt(inputCant.max);
-            
-            if (valor > max) inputCant.value = max;
+            if (valor > parseInt(inputCant.max)) inputCant.value = inputCant.max;
             if (valor < 1 || isNaN(valor)) inputCant.value = 1;
-            
             displayCant.textContent = inputCant.value;
         });
     </script>

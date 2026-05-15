@@ -5,52 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Perfil - Marketplace</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Ajuste para que el perfil no se vea apretado */
+        .perfil-container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .banco-section {
+            text-align: left;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 4px; font-weight: bold; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box; /* Evita que el input se salga del borde */
+        }
+    </style>
 </head>
 <body>
     <nav>
-        <a href="/catalogo" class="nav-logo">
-            <span>✨</span> Marketplace
-        </a>
+        <a href="/catalogo" class="nav-logo"><span>✨</span> Marketplace</a>
         <div class="nav-links">
             <a href="/catalogo" class="nav-link">Inicio</a>
             <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
         </div>
     </nav>
 
-    <div class="auth-wrapper">
-        <div class="auth-card">
-            <div style="font-size: 3rem; margin-bottom: 10px;">👤</div>
+    <div class="perfil-container">
+        <div class="auth-card" style="max-width: 100%;"> <div style="font-size: 3rem; margin-bottom: 10px;">👤</div>
             <h2>¡Hola, <%= nombre %>!</h2>
-            <p class="subtitle">Bienvenido a tu panel de control</p>
+            <p class="subtitle">Gestiona tu cuenta y datos de cobro</p>
             
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid var(--primario);">
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #e67e22;">
                 <p style="margin: 0; font-size: 0.9rem; color: #666;">Rol de usuario:</p>
-                <strong style="text-transform: capitalize; color: var(--oscuro);"><%= rol %></strong>
+                <strong style="text-transform: capitalize; color: #2c3e50;"><%= rol %></strong>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <!-- Botón para ir a comprar -->
                 <a href="/catalogo" class="btn-login" style="text-decoration: none;">🛒 Explorar Catálogo</a>
+                <a href="/mis-compras" class="btn-login" style="background-color: #3498db; text-decoration: none;">🛍️ Ver Mis Compras</a>
                 
-                <!-- BOTÓN NUEVO: Historial de compras (Visible para todos) -->
-                <a href="/mis-compras" class="btn-login" style="background-color: #3498db; text-decoration: none;">
-                    🛍️ Ver Mis Compras
-                </a>
-                
-                <!-- Opciones específicas para Artesanos -->
                 <% if (rol === 'artesano') { %>
-                    <a href="/mis-productos" class="btn-login" style="background-color: var(--secundario); text-decoration: none;">
-                        🔨 Gestionar Mis Productos
-                    </a>
+                    <a href="/mis-productos" class="btn-login" style="background-color: #e67e22; text-decoration: none;">🔨 Gestionar Mis Productos</a>
+                    <a href="/mis-ventas" class="btn-login" style="background-color: #27ae60; text-decoration: none;">📈 Ver Mis Ventas Recibidas</a>
 
-                    <a href="/mis-ventas" class="btn-login" style="background-color: #27ae60; text-decoration: none;">
-                                📈 Ver Mis Ventas Recibidas
-                    </a>
+                    <div class="banco-section">
+                        <h3 style="margin-top:0; font-size: 1.1rem; color: #2c3e50;">🏦 Datos de Transferencia</h3>
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 15px;">Completa esta información para que tus clientes puedan pagarte.</p>
+                        
+                        <form action="/perfil/actualizar-datos-cobro" method="POST">
+                            <div class="form-group">
+                                <label>Entidad Bancaria / Financiera:</label>
+                                <input type="text" name="banco_nombre" value="<%= usuario.banco_nombre || '' %>" placeholder="Ej: Visión Banco, Itaú, Ueno...">
+                            </div>
+
+                            <div style="display: flex; gap: 10px;">
+                                <div class="form-group" style="flex: 2;">
+                                    <label>Número de Cuenta:</label>
+                                    <input type="text" name="cuenta_numero" value="<%= usuario.cuenta_numero || '' %>">
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Tipo:</label>
+                                    <select name="cuenta_tipo">
+                                        <option value="Ahorro" <%= usuario.cuenta_tipo === 'Ahorro' ? 'selected' : '' %>>Ahorro</option>
+                                        <option value="Corriente" <%= usuario.cuenta_tipo === 'Corriente' ? 'selected' : '' %>>Corriente</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Nombre Completo del Titular:</label>
+                                <input type="text" name="nombre_titular" value="<%= usuario.nombre_titular || '' %>" placeholder="Ej: Carlos Francisco Arguello Monges">
+                            </div>
+
+                            <div class="form-group">
+                                <label>C.I. o RUC del Titular:</label>
+                                <input type="text" name="titular_documento" value="<%= usuario.titular_documento || '' %>">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Alias (Opcional):</label>
+                                <input type="text" name="alias_pago" value="<%= usuario.alias_pago || '' %>" placeholder="Tu alias de cuenta">
+                            </div>
+
+                            <button type="submit" class="btn-login" style="background-color: #2c3e50; border: none; width: 100%; cursor: pointer;">
+                                💾 Guardar Datos de Cobro
+                            </button>
+                        </form>
+                    </div>
                 <% } %>
             </div>
 
-            <div class="auth-footer">
-                ¿Deseas salir? <a href="/logout" style="color: #e76f51;">Cerrar sesión de forma segura</a>
+            <div class="auth-footer" style="margin-top: 20px;">
+                <a href="/logout" style="color: #e74c3c;">Cerrar sesión de forma segura</a>
             </div>
         </div>
     </div>
