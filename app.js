@@ -86,15 +86,30 @@ app.get('/registro', (req, res) => res.render('registro'));
 
 app.post('/registro', async (req, res) => {
     const { nombre, email, password, rol, taller_nombre, bio } = req.body;
+
     try {
+        // 1. VALIDACIÓN DE CONTRASEÑA (Mínimo 6 caracteres)
+        if (!password || password.length < 6) {
+            req.flash('error_msg', 'La contraseña debe tener al menos 6 caracteres.');
+            // Usamos return para que no intente ejecutar el INSERT
+            return res.redirect('/registro'); 
+        }
+
+        // 2. INSERTAR EN LA BASE DE DATOS
         await db.run(
             `INSERT INTO usuarios (nombre, email, password, rol, taller_nombre, bio) 
              VALUES (?, ?, ?, ?, ?, ?)`,
             [nombre, email, password, rol || 'cliente', taller_nombre || null, bio || null]
         );
+
+        req.flash('success_msg', 'Registro exitoso. ¡Ya puedes iniciar sesión!');
         res.redirect('/login');
+
     } catch (error) {
-        res.status(400).send("Error en el registro.");
+        console.error("Error en registro:", error);
+        // Es mejor redirigir al registro con un mensaje que enviar un texto plano con .send
+        req.flash('error_msg', 'Hubo un problema con el registro. El correo podría ya estar en uso.');
+        res.redirect('/registro');
     }
 });
 

@@ -1,0 +1,38 @@
+http://192.168.0.13:3000
+
+
+user1:juanperez118@test.com
+password:Astronauta.2026
+
+
+user_vendedor: tienda1@store.com
+pass:12345
+
+
+************************HISTORIAS DE USUARIO*************************************************************
+LISTO:HU1-Seguridad/Inicio de Sesión:Como usuario registrado (Admin, Vendedor o Cliente), quiero iniciar sesión con mi correo electrónico y contraseña, para acceder a las funcionalidades correspondientes a mi rol.
+LISTO:HU2-Seguridad/Registro de Vendedor:Como artesano, quiero completar un formulario con los datos de mi taller, para enviar mi solicitud de creación de tienda al administrador.
+ELIMINAR:HU3-Seguridad/Recuperación de Clave: Como usuario registrado, quiero solicitar un enlace de restablecimiento mediante mi correo electrónico, para recuperar el acceso a mi cuenta en caso de haber olvidado mi contraseña.
+LISTO:HU4-Cliente/Buscador Avanzado:Como cliente, quiero filtrar el catálogo usando criterios como categoría, rango de precio o artesano, para encontrar rápidamente la artesanía que me interesa.
+LISTO:HU5-Cliente/Detalle del Producto: Como cliente, quiero visualizar las características de un producto y seleccionar mi variante preferida (ej: talle, color), para poder agregarlo al carrito con la especificación correcta.
+HU6-Cliente/Carrito de Compras:Como cliente, quiero ingresar un código promocional en mi carrito de compras, para que el sistema calcule y aplique el descuento sobre el total de mi orden.
+HU7-Cliente/Checkout (Confirmación): Como cliente, quiero confirmar mis datos de envío y facturación, para generar y confirmar formalmente el pedido al vendedor.
+LISTO:HU8-Cliente/Home y Galería Principal:Como cliente, quiero visualizar una página de inicio con los productos más destacados y acceso directo a las categorías, para explorar rápidamente la oferta artesanal del sitio.
+LISTO:HU9-Cliente/Detalle del Producto (Variantes y Especificaciones): Como cliente, quiero ver la información completa de una artesanía, incluyendo descripción, materiales y opciones de personalización (talle, color, medida), para elegir la variante exacta antes de comprar.
+HU10-Cliente/Seguimiento de Pedidos:Como cliente, quiero consultar en qué etapa se encuentra cada pedido, para tener previsibilidad sobre la entrega del mismo.
+ELIMINAR: HU11-Cliente/Perfil de Cupón: Como cliente registrado, quiero ver un listado de los cupones disponibles en mi cuenta, para saber qué descuentos puedo aprovechar en mi próxima compra.
+HU12-Vendedor/Administrador de Productos: Como vendedor, quiero dar de alta un producto nuevo y configurar sus combinaciones de variantes (talles/colores) con su respectivo stock, para publicarlo en el marketplace.
+HU13-Vendedor/Gestión de Pedidos Recibidos: Como vendedor, quiero ver la lista de mis ventas y actualizar su estado logístico, para mantener informado al comprador sobre el avance de su paquete.
+ELIMINAR:HU14-Vendedor/Dashboard Operativo: Como vendedor, quiero visualizar un resumen gráfico y métricas clave de mi actividad mensual, para tomar decisiones rápidas sobre mi stock y conocer el rendimiento de mis ventas.
+HU15-Vendedor/Perfil Comercial: Como vendedor, quiero configurar la información pública de mi taller artesanal, para generar confianza en los clientes y facilitar que me contacten.
+HU16-Administrador/Maestro de Categorías y Atributos: Como administrador, quiero crear, editar y eliminar las categorías globales y los tipos de atributos (ej: “color“, “tamaño“, “tipo de material“), para que los vendedores puedan utilizarlos al cargar sus productos.
+HU17-Administrativo/Gestión de Reglas y Estados: Como administrador, quiero definir los nombres de los estados por los que pasa un pedido (ej: Pendiente, Producción, Enviado), para parametrizar el flujo logístico del marketplace
+HU18-Administrador/Moderación de Vendedores: Como administrador, quiero acceder a tableros de control con datos consolidados de todo el sitio, para analizar el crecimiento del marketplace y la efectividad de las categorías y cupones.
+ELIMINAR:HU19-Administrativo/Reporte de Rendimiento: Como administrador, quiero acceder a tableros de control con datos consolidados de todo el sitio, para analizar el crecimiento del marketplace y la efectividad de las categorías y cupones.
+LISTO:HU20-Vendedor/Edición de Catálogo: Como vendedor, quiero modificar la información de mis productos ya publicados (nombre, precio, stock, etc.), para mantener mi inventario actualizado sin tener que eliminar y volver a cargar el artículo.
+
+Completadas: HU1, HU2, HU8, HU12, HU15, HU16, HU18
+
+Por seguridad, en la versión final el rol de administrador no será de libre registro, sino que se asignará directamente desde la base de datos o por otro administrador.
+
+Agregar opcion de cargar imagenes al cargar producto

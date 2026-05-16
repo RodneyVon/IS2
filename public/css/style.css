@@ -483,3 +483,97 @@ nav {
     background: #e76f51;
     color: white;
 }
+
+
+/* --- Estilos para el Panel de Ventas del Artesano --- */
+
+/* Contenedor de la tabla para que sea responsiva */
+.tabla-ventas-container {
+    overflow-x: auto;
+    margin-top: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.tabla-ventas {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.tabla-ventas th, 
+.tabla-ventas td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.tabla-ventas th {
+    background-color: #f8f9fa;
+    color: #2d3436;
+    font-weight: 600;
+}
+
+/* Estilos para los Badges (Etiquetas de estado) */
+.badge-estado {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 100px;
+}
+
+/* Colores dinámicos según el atributo data-estado */
+.badge-estado[data-estado="pendiente"] {
+    background-color: #ffeaa7;
+    color: #d35400;
+}
+
+.badge-estado[data-estado="pagado"] {
+    background-color: #55efc4;
+    color: #00b894;
+}
+
+.badge-estado[data-estado="enviado"] {
+    background-color: #81ecec;
+    color: #0984e3;
+}
+
+.badge-estado[data-estado="entregado"] {
+    background-color: #b2bec3;
+    color: #2d3436;
+}
+
+/* Estilo para el formulario de cambio de estado */
+.form-actualizar-estado {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.select-estado {
+    padding: 6px;
+    border: 1px solid #dfe6e9;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+}
+
+.btn-actualizar {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.3s;
+}
+
+.btn-actualizar:hover {
+    background-color: #219150;
+}
