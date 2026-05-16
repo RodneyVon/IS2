@@ -668,14 +668,21 @@ app.get('/mis-compras/:id', verificarSesion, async (req, res) => {
         const pedido = await db.get(`SELECT * FROM pedidos WHERE id = ? AND usuario_id = ?`, [req.params.id, req.session.usuario.id]);
         if (!pedido) return res.status(404).send("Pedido no encontrado");
 
+        // CONSULTA ACTUALIZADA:
+        // Añadimos u.nombre para obtener el nombre del vendedor desde la tabla usuarios
         const detalles = await db.all(`
-            SELECT pd.*, p.nombre AS producto_nombre 
+            SELECT 
+                pd.*, 
+                p.nombre AS producto_nombre,
+                u.nombre AS vendedor_nombre
             FROM pedido_detalles pd
             JOIN productos p ON pd.producto_id = p.id
+            JOIN usuarios u ON p.vendedor_id = u.id
             WHERE pd.pedido_id = ?`, [req.params.id]);
 
         res.render('compra-detalle', { pedido, detalles }); 
     } catch (error) {
+        console.error(error);
         res.status(500).send("Error al obtener detalle");
     }
 });

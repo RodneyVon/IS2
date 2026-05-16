@@ -12,7 +12,7 @@
             <h2>✨ Bienvenido</h2>
             <p class="subtitle">Ingresa tus datos para continuar</p>
 
-            <% if (typeof error !== 'undefined') { %>
+            <% if (typeof error !== 'undefined'&& error && error.length > 0) { %>
                 <div class="error-msg">
                     ⚠️ <%= error %>
                 </div>
