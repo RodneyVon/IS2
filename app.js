@@ -156,7 +156,6 @@ app.get('/perfil', verificarSesion, async (req, res) => {
 
 // --- RUTA PARA GUARDAR DATOS BANCARIOS DEL ARTESANO ---
 app.post('/perfil/actualizar-datos-cobro', verificarSesion, async (req, res) => {
-    console.log("Datos recibidos del formulario:", req.body);
     // Seguridad: Si no es artesano, no procesamos nada
     if (req.session.usuario.rol !== 'artesano') {
         return res.status(403).send("No tienes permiso para realizar esta acción");
@@ -668,7 +667,6 @@ app.get('/mis-compras/:id', verificarSesion, async (req, res) => {
         const pedido = await db.get(`SELECT * FROM pedidos WHERE id = ? AND usuario_id = ?`, [req.params.id, req.session.usuario.id]);
         if (!pedido) return res.status(404).send("Pedido no encontrado");
 
-        // CONSULTA ACTUALIZADA:
         // Añadimos u.nombre para obtener el nombre del vendedor desde la tabla usuarios
         const detalles = await db.all(`
             SELECT 
