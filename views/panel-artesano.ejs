@@ -22,6 +22,38 @@
         <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
     </div>
 </nav>
+<div style="max-width: 800px; margin: 20px auto; padding: 0 20px;">
+    <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+        <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; border: 1px solid #f5c6cb; text-align: center; font-weight: bold; margin-bottom: 20px;">
+            ⚠️ <%= error_msg %>
+        </div>
+    <% } %>
+
+    <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+        <div id="toast-panel" style="background-color: #2ecc71; color: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 500; animation: fadeIn 0.5s ease-out;">
+            <span>✅</span> <%= success_msg %>
+        </div>
+
+        <script>
+            // Desvanecer el mensaje de éxito después de 3 segundos
+            setTimeout(() => {
+                const toast = document.getElementById('toast-panel');
+                if (toast) {
+                    toast.style.transition = "opacity 0.5s ease";
+                    toast.style.opacity = "0";
+                    setTimeout(() => toast.remove(), 500);
+                }
+            }, 3000);
+        </script>
+    <% } %>
+</div>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 
     <div class="container" style="padding-top: 30px; max-width: 1200px; margin: auto;">
         <h1 style="margin-left: 20px;">Gestión de Productos</h1>
@@ -92,6 +124,11 @@
                             <td><span class="badge-stock"><%= p.stock %> und.</span></td>
                             <td>
                                 <a href="/productos/editar/<%= p.id %>" style="color: var(--primario); text-decoration: none; font-weight: bold; font-size: 0.9rem;">✏️ Editar</a>
+                                <a href="/productos/eliminar/<%= p.id %>" 
+       style="color: #e74c3c; text-decoration: none; font-weight: bold; font-size: 0.9rem;"
+       onclick="return confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.')">
+       🗑️ Eliminar
+    </a>
                             </td>
                         </tr>
                     <% }) %>

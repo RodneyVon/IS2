@@ -270,17 +270,68 @@ app.get('/mis-productos', verificarSesion, async (req, res) => {
 
 app.post('/productos/nuevo', verificarSesion, async (req, res) => {
     try {
-        const { nombre, descripcion, precio, stock, categoria } = req.body;
-        if (req.session.usuario.rol !== 'artesano') return res.status(403).send("No tienes permiso");
+        // 1. Agregamos 'variantes' a la extracción de datos
+        const { nombre, descripcion, precio, stock, categoria, variantes } = req.body;
 
+        if (req.session.usuario.rol !== 'artesano') {
+            return res.status(403).send("No tienes permiso");
+        }
+
+        // 2. Actualizamos el INSERT para incluir la columna 'variantes'
+        // Pasamos de 6 columnas a 7 columnas (?, ?, ?, ?, ?, ?, ?)
         await db.run(`
-            INSERT INTO productos (nombre, descripcion, precio, stock, categoria, vendedor_id)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-            [nombre, descripcion, precio, stock, categoria, req.session.usuario.id]
+            INSERT INTO productos (nombre, descripcion, precio, stock, categoria, variantes, vendedor_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+                nombre, 
+                descripcion, 
+                precio, 
+                stock, 
+                categoria, 
+                variantes || null, // Guardamos las variantes (o null si está vacío)
+                req.session.usuario.id
+            ]
         );
+
+        // 3. Añadimos un mensaje de éxito para el artesano
+        req.flash('success_msg', '¡Producto publicado correctamente! 🏺');
         res.redirect('/mis-productos');
+
     } catch (error) {
+        console.error("Error al publicar:", error);
         res.status(500).send("Error al publicar");
+    }
+});
+
+// RUTA PARA ELIMINAR PRODUCTO
+app.get('/productos/eliminar/:id', verificarSesion, async (req, res) => {
+    const productoId = req.params.id;
+    const vendedorId = req.session.usuario.id; // El ID del artesano logueado
+
+    try {
+        // 1. Verificamos que el producto exista y que pertenezca al artesano que intenta borrarlo
+        // Esto evita que alguien borre productos ajenos cambiando el ID en la URL
+        const producto = await db.get(
+            'SELECT * FROM productos WHERE id = ? AND vendedor_id = ?', 
+            [productoId, vendedorId]
+        );
+
+        if (!producto) {
+            req.flash('error_msg', 'No tienes permiso para eliminar este producto o no existe.');
+            return res.redirect('/mis-productos');
+        }
+
+        // 2. Si la validación pasa, procedemos a borrar
+        await db.run('DELETE FROM productos WHERE id = ?', [productoId]);
+
+        // 3. Avisamos al usuario y redirigimos
+        req.flash('success_msg', 'Producto eliminado correctamente 🗑️');
+        res.redirect('/mis-productos');
+
+    } catch (error) {
+        console.error("Error al eliminar producto:", error);
+        req.flash('error_msg', 'Ocurrió un error al intentar eliminar el producto.');
+        res.redirect('/mis-productos');
     }
 });
 
