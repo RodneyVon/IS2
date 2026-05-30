@@ -1,14 +1,15 @@
 const express = require('express');
 const session = require('express-session'); 
 const flash = require('connect-flash');
-const path = require('path'); // [NUEVO] Necesario para manejar extensiones de archivos
-const multer = require('multer'); // [NUEVO] Para subir los comprobantes
+const path = require('path'); // Necesario para manejar extensiones de archivos
+const multer = require('multer'); // Para subir los comprobantes
 const { setup } = require('./database');
 const app = express();
 
 // ==========================================
 // --- CONFIGURACIÓN DE MULTER (SUBIDA DE ARCHIVOS) ---
 // ==========================================
+// Multer para subida de comprobantes
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'public/uploads/comprobantes'); // Asegúrate de crear esta carpeta
@@ -20,6 +21,29 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// Multer para subida de fotos de productos
+const storageProductos = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/uploads/productos'); // ⚠️ Recuerda crear esta carpeta
+    },
+    filename: (req, file, cb) => {
+        // 1. Limpiamos el nombre original quitando espacios y caracteres especiales
+        const nombreLimpio = path.parse(file.originalname).name
+            .replace(/\s+/g, '-') 
+            .replace(/[^a-zA-Z0-9_-]/g, '');
+
+        // 2. Generamos un número aleatorio entre 0 y 9999
+        const numeroAleatorio = Math.floor(Math.random() * 10000);
+
+        // 3. Combinamos todo: prod- + nombre + timestamp + aleatorio + extensión
+        // Esto soluciona definitivamente el problema de las imágenes duplicadas o sobrescritas
+        cb(null, 'prod-' + nombreLimpio + '-' + Date.now() + '-' + numeroAleatorio + path.extname(file.originalname));
+    }
+});
+
+// Usamos .array() en lugar de .single() para permitir hasta 5 fotos juntas
+const uploadProducto = multer({ storage: storageProductos }).array('imagenes', 5);
+
 // ==========================================
 // --- CONFIGURACIÓN Y MIDDLEWARES ---
 // ==========================================
@@ -30,6 +54,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Hace que la carpeta de comprobantes sea accesible desde el navegador
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads/comprobantes')));
+
+// Hace que la carpeta de fotos de productos sea accesible desde el navegador
+app.use('/uploads/productos', express.static(path.join(__dirname, 'public/uploads/productos')));
 
 app.use(session({
     secret: 'mi-clave-secreta', 
@@ -198,11 +225,13 @@ app.post('/perfil/actualizar-datos-cobro', verificarSesion, async (req, res) => 
     }
 });
 
-app.get('/catalogo', verificarSesion, async (req, res) => {
+// MODIFICADO: Quitamos 'verificarSesion' para que el catálogo sea público y cualquiera pueda ver los productos
+app.get('/catalogo', async (req, res) => {
     try {
         const { buscar, categoria } = req.query;
         let query = `SELECT productos.*, usuarios.taller_nombre FROM productos JOIN usuarios ON productos.vendedor_id = usuarios.id WHERE 1=1`;
         let params = [];
+        
         if (buscar) {
             query += ` AND (productos.nombre LIKE ? OR productos.descripcion LIKE ?)`;
             params.push(`%${buscar}%`, `%${buscar}%`);
@@ -211,26 +240,182 @@ app.get('/catalogo', verificarSesion, async (req, res) => {
             query += ` AND productos.categoria = ?`;
             params.push(categoria);
         }
+        
         const productos = await db.all(query, params);
-        const categorias = await db.all('SELECT DISTINCT categoria FROM productos');
-        res.render('catalogo', { productos, categorias, buscar, categoriaSeleccionada: categoria });
+        const categorias = await db.all('SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != ""');
+        
+        // CORREGIDO: Añadimos 'usuario' al render para que el Navbar de catalogo.ejs sepa quién está navegando
+        res.render('catalogo', { 
+            productos, 
+            categorias, 
+            buscar, 
+            categoriaSeleccionada: categoria,
+            usuario: req.session.usuario || null // 👈 ESTA LÍNEA REPARA TU NAV
+        });
+        
     } catch (error) {
+        console.error("Error en catálogo:", error);
         res.status(500).send("Error en el catálogo");
+    }
+});
+
+app.get('/dashboard', verificarSesion, async (req, res) => {
+    try {
+        // 1. Contar total de productos en la plataforma
+        const totalProductos = await db.get('SELECT COUNT(*) AS total FROM productos');
+
+        // 2. Contar artesanos registrados
+        const totalArtesanos = await db.get("SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'artesano'");
+
+        // 3. Calcular el Stock total general de productos disponibles
+        const totalStock = await db.get('SELECT SUM(stock) AS total FROM productos');
+
+        // 4. CORREGIDO: Ventas Totales Sumando la columna 'total' de tu tabla 'pedidos' (Filtrando cancelados/rechazados)
+        const ventasCalculadas = await db.get("SELECT SUM(total) AS total_ventas FROM pedidos WHERE estado != 'cancelado' AND estado != 'rechazado'");
+        const totalVentas = ventasCalculadas.total_ventas || 0;
+
+        // 5. CORREGIDO: Artesanías Favoritas usando tu tabla 'pedido_detalles' (pd) (Filtrando cancelados/rechazados)
+        const artesaniasFavoritas = await db.all(`
+            SELECT p.id, p.nombre, p.precio, SUM(pd.cantidad) AS veces_vendido,
+                   (SELECT ruta FROM producto_imagenes WHERE producto_id = p.id LIMIT 1) AS imagen_principal
+            FROM pedido_detalles pd
+            JOIN productos p ON pd.producto_id = p.id
+            JOIN pedidos ped ON pd.pedido_id = ped.id
+            WHERE ped.estado != 'cancelado' AND ped.estado != 'rechazado'
+            GROUP BY pd.producto_id
+            ORDER BY veces_vendido DESC
+            LIMIT 3
+        `);
+
+        // 6. Top de categorías con más productos (Mantenido)
+        const topCategorias = await db.all(`
+            SELECT categoria, COUNT(*) AS cantidad 
+            FROM productos 
+            WHERE categoria IS NOT NULL AND categoria != ''
+            GROUP BY categoria 
+            ORDER BY cantidad DESC 
+            LIMIT 5
+        `);
+
+        // Renderizamos pasándole las estadísticas reales de tu base de datos
+        res.render('dashboard', {
+            estadisticas: {
+                productos: totalProductos.total || 0,
+                artesanos: totalArtesanos.total || 0,
+                stockGeneral: totalStock.total || 0,
+                ventasTotales: totalVentas,
+                favoritos: artesaniasFavoritas,
+                categorias: topCategorias
+            },
+            usuario: req.session.usuario || null // Control de sesión para el navbar
+        });
+
+    } catch (error) {
+        console.error("====== ERROR CRÍTICO EN /dashboard ======");
+        console.error(error);
+        console.error("=========================================");
+        res.status(500).send("Error al cargar las estadísticas del sitio");
+    }
+});
+
+// ROUTE: Dashboard Personal del Artesano
+app.get('/mis-estadisticas', verificarSesion, async (req, res) => {
+    try {
+        // SEGURIDAD CRÍTICA: Si no es artesano, no tiene nada que hacer aquí
+        if (req.session.usuario.rol !== 'artesano') {
+            req.flash('error_msg', '❌ Acceso denegado. Esta sección es exclusiva para vendedores.');
+            return res.redirect('/catalogo');
+        }
+
+        const vendedorId = req.session.usuario.id;
+
+        // 1. Total de productos propios publicados por este artesano
+        const totalProductos = await db.get('SELECT COUNT(*) AS total FROM productos WHERE vendedor_id = ?', [vendedorId]);
+
+        // 2. Calcular el Stock total de sus propios productos en depósito
+        const totalStock = await db.get('SELECT SUM(stock) AS total FROM productos WHERE vendedor_id = ?', [vendedorId]);
+
+        // 3. CORREGIDO: Ventas Totales en Guaraníes (₲) filtrando pedidos cancelados o rechazados
+        // Sumamos el subtotal (cantidad * precio_unitario) cruzando con la tabla 'pedidos' (ped)
+        const ventasCalculadas = await db.get(`
+            SELECT SUM(pd.cantidad * pd.precio_unitario) AS total_ventas 
+            FROM pedido_detalles pd
+            JOIN pedidos ped ON pd.pedido_id = ped.id
+            WHERE pd.vendedor_id = ? AND ped.estado != 'cancelado' AND ped.estado != 'rechazado'`, 
+            [vendedorId]
+        );
+        const totalVentas = ventasCalculadas.total_ventas || 0;
+
+        // 4. CORREGIDO: Sus 3 artesanías más vendidas filtrando pedidos cancelados o rechazados
+        const misFavoritos = await db.all(`
+            SELECT p.id, p.nombre, p.precio, SUM(pd.cantidad) AS veces_vendido,
+                   (SELECT ruta FROM producto_imagenes WHERE producto_id = p.id LIMIT 1) AS imagen_principal
+            FROM pedido_detalles pd
+            JOIN productos p ON pd.producto_id = p.id
+            JOIN pedidos ped ON pd.pedido_id = ped.id
+            WHERE pd.vendedor_id = ? AND ped.estado != 'cancelado' AND ped.estado != 'rechazado'
+            GROUP BY pd.producto_id
+            ORDER BY veces_vendido DESC
+            LIMIT 3
+        `, [vendedorId]);
+
+        // 5. Categorías en las que este artesano tiene presencia
+        const misCategorias = await db.all(`
+            SELECT categoria, COUNT(*) AS cantidad 
+            FROM productos 
+            WHERE vendedor_id = ? AND categoria IS NOT NULL AND categoria != ''
+            GROUP BY categoria 
+            ORDER BY cantidad DESC
+        `, [vendedorId]);
+
+        // Renderizamos una nueva vista enfocada en su negocio
+        res.render('dashboard-vendedor', {
+            estadisticas: {
+                productos: totalProductos.total || 0,
+                stockGeneral: totalStock.total || 0,
+                ventasTotales: totalVentas,
+                favoritos: misFavoritos,
+                categorias: misCategorias
+            },
+            usuario: req.session.usuario
+        });
+
+    } catch (error) {
+        console.error("Error en dashboard de vendedor:", error);
+        res.status(500).send("Error al cargar las estadísticas de tu tienda");
     }
 });
 
 app.get('/producto/:id', verificarSesion, async (req, res) => {
     try {
+        const productoId = req.params.id;
+
+        // 1. Consulta Principal: Traemos los datos del producto y el nombre del taller del artesano
         const producto = await db.get(`
             SELECT productos.*, usuarios.taller_nombre 
             FROM productos 
             JOIN usuarios ON productos.vendedor_id = usuarios.id 
-            WHERE productos.id = ?`, [req.params.id]);
+            WHERE productos.id = ?`, 
+            [productoId]
+        );
         
-        if (!producto) return res.status(404).send("Producto no encontrado");
-        res.render('producto-detalle', { producto });
+        // Si por algún motivo el ID no existe, devolvemos un error 404
+        if (!producto) {
+            return res.status(404).send("Producto no encontrado");
+        }
+
+        // 2. Consulta Secundaria: Traemos todas las filas de fotos asociadas a este producto
+        const imagenes = await db.all(
+            'SELECT * FROM producto_imagenes WHERE producto_id = ?', 
+            [productoId]
+        );
+
+        // Pasamos AMBOS datos a tu plantilla EJS para que los renderice
+        res.render('producto-detalle', { producto, imagenes });
+
     } catch (error) {
-        res.status(500).send("Error al cargar el producto");
+        console.error("Error al cargar la vista de detalle:", error);
+        res.status(500).send("Error interno al cargar la página del producto");
     }
 });
 
@@ -267,18 +452,37 @@ app.get('/mis-productos', verificarSesion, async (req, res) => {
     res.render('panel-artesano', { productos });
 });
 
-app.post('/productos/nuevo', verificarSesion, async (req, res) => {
+//Agregamos 'uploadProducto' para que Multer procese las fotos antes de entrar a la lógica
+app.post('/productos/nuevo', verificarSesion, (req, res, next) => {
+    // Ejecutamos Multer manualmente aquí para poder capturar el error ANTES de que rompa Express
+    uploadProducto(req, res, function (error) {
+        if (error) {
+            // Si el usuario seleccionó más de 5 fotos, Multer lanzará este error
+            if (error instanceof multer.MulterError && error.code === 'LIMIT_UNEXPECTED_FILE') {
+                console.error("⚠️ Intento de subida masiva detectado (Más de 5 imágenes).");
+                req.flash('error_msg', '❌ No puedes subir más de 5 archivos. Por favor, inténtalo de nuevo seleccionando un máximo de 5 imágenes.');
+                return res.redirect('/mis-productos');
+            }
+            
+            // Si es otro error de Multer diferente
+            console.error("Error de Multer:", error);
+            req.flash('error_msg', '❌ Ocurrió un error al procesar las imágenes.');
+            return res.redirect('/mis-productos');
+        }
+        // Si no hay errores con las fotos, pasamos al siguiente bloque (la lógica de la base de datos)
+        next();
+    });
+}, async (req, res) => {
     try {
-        // 1. Agregamos 'variantes' a la extracción de datos
+        // 1. Extracción de datos (Mantenido intacto)
         const { nombre, descripcion, precio, stock, categoria, variantes } = req.body;
 
         if (req.session.usuario.rol !== 'artesano') {
             return res.status(403).send("No tienes permiso");
         }
 
-        // 2. Actualizamos el INSERT para incluir la columna 'variantes'
-        // Pasamos de 6 columnas a 7 columnas (?, ?, ?, ?, ?, ?, ?)
-        await db.run(`
+        // 2. Insertar en la tabla 'productos'
+        const result = await db.run(`
             INSERT INTO productos (nombre, descripcion, precio, stock, categoria, variantes, vendedor_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
@@ -287,17 +491,38 @@ app.post('/productos/nuevo', verificarSesion, async (req, res) => {
                 precio, 
                 stock, 
                 categoria, 
-                variantes || null, // Guardamos las variantes (o null si está vacío)
+                variantes || null, 
                 req.session.usuario.id
             ]
         );
 
-        // 3. Añadimos un mensaje de éxito para el artesano
-        req.flash('success_msg', '¡Producto publicado correctamente! 🏺');
+        // Capturamos el ID del producto recién insertado
+        const productoId = result.lastID;
+
+        // Registramos todas las imágenes subidas en la tabla 'producto_imagenes'
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                await db.run(
+                    'INSERT INTO producto_imagenes (producto_id, ruta) VALUES (?, ?)',
+                    [productoId, file.filename]
+                );
+            }
+        } else {
+            // Imagen de respaldo por si no se subieron fotos
+            await db.run(
+                'INSERT INTO producto_imagenes (producto_id, ruta) VALUES (?, ?)',
+                [productoId, 'default-producto.png']
+            );
+        }
+
+        // 3. Mensaje de éxito para el artesano
+        req.flash('success_msg', '¡Producto publicado correctamente con sus imágenes! 🏺');
         res.redirect('/mis-productos');
 
     } catch (error) {
-        console.error("Error al publicar:", error);
+        console.error("====== ERROR CRÍTICO EN /productos/nuevo ======");
+        console.error(error);
+        console.error("===============================================");
         res.status(500).send("Error al publicar");
     }
 });
@@ -436,6 +661,7 @@ app.post('/ventas/confirmar-pago/:id', verificarSesion, async (req, res) => {
 // Ruta para mostrar el formulario de edición con los datos actuales
 app.get('/productos/editar/:id', verificarSesion, async (req, res) => {
     try {
+        // 1. Buscamos el producto asegurando que pertenezca al artesano (Mantenido intacto)
         const producto = await db.get(
             'SELECT * FROM productos WHERE id = ? AND vendedor_id = ?', 
             [req.params.id, req.session.usuario.id]
@@ -446,28 +672,80 @@ app.get('/productos/editar/:id', verificarSesion, async (req, res) => {
             return res.redirect('/mis-productos');
         }
 
-        res.render('editar-producto', { producto });
+        // NUEVO: Buscamos todas las imágenes asociadas a este producto para la galería de edición
+        const imagenes = await db.all(
+            'SELECT * FROM producto_imagenes WHERE producto_id = ?', 
+            [req.params.id]
+        );
+
+        // 2. Renderizamos la vista pasando tanto el producto como sus imágenes
+        res.render('editar-producto', { 
+            producto, 
+            imagenes 
+        });
+
     } catch (error) {
         console.error(error);
         res.status(500).send("Error al cargar el formulario de edición");
     }
 });
 
-app.post('/productos/editar/:id', verificarSesion, async (req, res) => {
+// Envolvemos la ruta para ejecutar Multer manualmente y atajar errores de subida masiva antes de tocar la BD
+app.post('/productos/editar/:id', verificarSesion, (req, res, next) => {
+    uploadProducto(req, res, function (error) {
+        if (error) {
+            if (error instanceof multer.MulterError && error.code === 'LIMIT_UNEXPECTED_FILE') {
+                req.flash('error_msg', '❌ No puedes superar el límite de 5 imágenes en total.');
+                return res.redirect(`/productos/editar/${req.params.id}`);
+            }
+            req.flash('error_msg', '❌ Ocurrió un error al procesar las nuevas imágenes.');
+            return res.redirect(`/productos/editar/${req.params.id}`);
+        }
+        next();
+    });
+}, async (req, res) => {
     try {
-        const { nombre, descripcion, precio, stock, categoria, variantes } = req.body;
+        // 1. Añadimos 'eliminar_imagenes' que viene de los checkboxes de la vista
+        const { nombre, descripcion, precio, stock, categoria, variantes, eliminar_imagenes } = req.body;
+        const productoId = req.params.id;
+        const vendedorId = req.session.usuario.id;
         
+        // 2. Tu UPDATE original a la tabla 'productos' (Mantenido 100% idéntico)
         await db.run(
             `UPDATE productos 
              SET nombre=?, descripcion=?, precio=?, stock=?, categoria=?, variantes=? 
              WHERE id=? AND vendedor_id=?`,
-            [nombre, descripcion, precio, stock, categoria, variantes, req.params.id, req.session.usuario.id]
+            [nombre, descripcion, precio, stock, categoria, variantes || null, productoId, vendedorId]
         );
+
+        // NUEVO: 3. Procesar eliminación de imágenes seleccionadas (Si marcó alguna)
+        if (eliminar_imagenes) {
+            // Si el usuario marca una sola casilla llega como String, si marca varias llega como Array.
+            // Nos aseguramos de tratarlo siempre como una lista (Array) para recorrerlo.
+            const imagenesABorrar = Array.isArray(eliminar_imagenes) ? eliminar_imagenes : [eliminar_imagenes];
+            
+            for (const imgId of imagenesABorrar) {
+                // Borramos el registro de la imagen asegurando que pertenezca al producto en cuestión
+                await db.run('DELETE FROM producto_imagenes WHERE id = ? AND producto_id = ?', [imgId, productoId]);
+            }
+        }
+
+        // NUEVO: 4. Procesar la inserción de nuevas imágenes (Si adjuntó archivos)
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                await db.run(
+                    'INSERT INTO producto_imagenes (producto_id, ruta) VALUES (?, ?)',
+                    [productoId, file.filename]
+                );
+            }
+        }
 
         req.flash('success_msg', 'Producto actualizado correctamente. ✨');
         res.redirect('/mis-productos');
     } catch (error) {
+        console.error("====== ERROR EN POST /productos/editar/:id ======");
         console.error(error);
+        console.error("=================================================");
         req.flash('error_msg', 'Error al actualizar el producto.');
         res.redirect('/mis-productos');
     }

@@ -26,7 +26,7 @@ async function setup() {
     )
 `);
 
-    // Tabla de Productos:
+    // 1. Tabla de Productos:
     await db.exec(`
         CREATE TABLE IF NOT EXISTS productos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,7 +41,15 @@ async function setup() {
         )
     `);
 
-    // --- NUEVAS TABLAS PARA EL SPRINT 3 ---
+    // 2. Tabla de Imágenes de los Productos:
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS producto_imagenes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            producto_id INTEGER,
+            ruta TEXT NOT NULL,
+            FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+        )
+    `);
 
     // 3. Tabla de Carrito
     await db.exec(`
@@ -87,10 +95,7 @@ async function setup() {
     )
 `);
 
-    console.log("Base de datos actualizada con campos para HU.");
     return db;
 }
 
 module.exports = { setup };
-
-

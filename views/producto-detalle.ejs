@@ -48,7 +48,28 @@
 
     <div class="detalle-wrapper">
         <article class="detalle-card">
-            <div class="detalle-visual">🏺</div>
+            
+            <div class="detalle-visual" style="display: flex; flex-direction: column; gap: 15px; padding: 10px; background: transparent;">
+                
+                <div class="foto-principal-contenedor" style="width: 100%;">
+                    <img src="/uploads/productos/<%= imagenes.length > 0 ? imagenes[0].ruta : 'default-producto.png' %>" 
+                         id="visor-grande" 
+                         alt="<%= producto.nombre %>" 
+                         style="width: 100%; height: 380px; object-fit: cover; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                </div>
+
+                <% if (imagenes.length > 1) { %>
+                    <div class="miniaturas-fila" style="display: flex; gap: 10px; overflow-x: auto; padding: 5px 0; width: 100%;">
+                        <% imagenes.forEach((img, index) => { %>
+                            <img src="/uploads/productos/<%= img.ruta %>" 
+                                 alt="Miniatura <%= index + 1 %>" 
+                                 style="width: 65px; height: 65px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #eee; transition: all 0.2s;"
+                                 class="foto-miniatura"
+                                 onclick="actualizarVisor(this)">
+                        <% }) %>
+                    </div>
+                <% } %>
+            </div>
             <div class="detalle-info">
                 <header class="detalle-header">
                     <span class="categoria-tag"><%= producto.categoria || 'Artesanía' %></span>
@@ -59,37 +80,37 @@
                 <div class="detalle-descripcion"><%= producto.descripcion %></div>
 
                 <div class="compra-container">
-    <div class="precio-grande">₲<%= producto.precio %></div>
-    
-    <form action="/carrito/agregar/<%= producto.id %>" method="POST">
-        <div class="form-group">
-            <label style="font-size: 0.85rem;">Cantidad a pedir:</label>
-            
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
-                
-                <div style="display: flex; gap: 10px;">
-                    <input type="number" name="cantidad" id="cantidad" value="1" min="1" max="<%= producto.stock %>" 
-                           style="width: 80px; text-align: center; border-radius: 8px; border: 1px solid #ccc;">
+                    <div class="precio-grande">₲<%= producto.precio %></div>
                     
-                    <button type="submit" name="accion" value="carrito" class="btn-login" 
-                            style="margin: 0; flex: 1; background-color: #2c3e50; border: none; border-radius: 8px; cursor: pointer;">
-                        🛒 Añadir <span id="display-cantidad">1</span> al Carrito
-                    </button>
+                    <form action="/carrito/agregar/<%= producto.id %>" method="POST">
+                        <div class="form-group">
+                            <label style="font-size: 0.85rem;">Cantidad a pedir:</label>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
+                                
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="number" name="cantidad" id="cantidad" value="1" min="1" max="<%= producto.stock %>" 
+                                           style="width: 80px; text-align: center; border-radius: 8px; border: 1px solid #ccc;">
+                                    
+                                    <button type="submit" name="accion" value="carrito" class="btn-login" 
+                                            style="margin: 0; flex: 1; background-color: #2c3e50; border: none; border-radius: 8px; cursor: pointer;">
+                                        🛒 Añadir <span id="display-cantidad">1</span> al Carrito
+                                    </button>
+                                </div>
+
+                                <button type="submit" name="accion" value="comprar" class="btn-login" 
+                                        style="margin: 0; width: 100%; background-color: #e67e22; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; padding: 12px;">
+                                    ⚡ Comprar ahora directamente
+                                </button>
+
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <p style="margin-top: 15px; font-size: 0.8rem; color: #999;">
+                        ✅ Stock disponible: <%= producto.stock %> unidades
+                    </p>
                 </div>
-
-                <button type="submit" name="accion" value="comprar" class="btn-login" 
-                        style="margin: 0; width: 100%; background-color: #e67e22; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; padding: 12px;">
-                    ⚡ Comprar ahora directamente
-                </button>
-
-            </div>
-        </div>
-    </form>
-    
-    <p style="margin-top: 15px; font-size: 0.8rem; color: #999;">
-        ✅ Stock disponible: <%= producto.stock %> unidades
-    </p>
-</div>
 
                 <a href="/catalogo" class="btn-secundario" style="margin-top: 20px; text-decoration: none; display: inline-block;">
                     ← Seguir explorando la galería
@@ -99,6 +120,21 @@
     </div>
 
     <script>
+        // Lógica interactiva del visor de imágenes
+        function actualizarVisor(elementoMiniatura) {
+            document.getElementById('visor-grande').src = elementoMiniatura.src;
+            
+            const todasLasMiniaturas = document.querySelectorAll('.foto-miniatura');
+            todasLasMiniaturas.forEach(miniatura => {
+                miniatura.style.borderColor = '#eee';
+                miniatura.style.transform = 'scale(1)';
+            });
+            
+            elementoMiniatura.style.borderColor = '#e67e22'; // Resalta con el tono naranja de tu botón comprar
+            elementoMiniatura.style.transform = 'scale(1.05)';
+        }
+
+        // Lógica de control del input de cantidad (Mantenida intacta)
         const inputCant = document.getElementById('cantidad');
         const displayCant = document.getElementById('display-cantidad');
         inputCant.addEventListener('input', () => {

@@ -65,9 +65,28 @@
                         
                         <form action="/perfil/actualizar-datos-cobro" method="POST">
                             <div class="form-group">
-                                <label>Entidad Bancaria / Financiera:</label>
-                                <input type="text" name="banco_nombre" value="<%= usuario.banco_nombre || '' %>" placeholder="Ej: Visión Banco, Itaú, Ueno...">
-                            </div>
+    <label>Entidad Bancaria / Financiera:</label>
+    <select name="banco_nombre" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+        <option value="" disabled <%= !usuario.banco_nombre ? 'selected' : '' %>>Selecciona una entidad...</option>
+        
+        <option value="Banco Itaú" <%= usuario.banco_nombre === 'Banco Itaú' ? 'selected' : '' %>>Banco Itaú</option>
+        <option value="Sudameris Bank" <%= usuario.banco_nombre === 'Sudameris Bank' ? 'selected' : '' %>>Sudameris Bank</option>
+        <option value="Banco GNB" <%= usuario.banco_nombre === 'Banco GNB' ? 'selected' : '' %>>Banco GNB</option>
+        <option value="Banco Basa S.A" <%= usuario.banco_nombre === 'Banco Basa S.A' ? 'selected' : '' %>>Banco Basa S.A</option>
+        <option value="Banco Continental" <%= usuario.banco_nombre === 'Banco Continental' ? 'selected' : '' %>>Banco Continental</option>
+        <option value="Banco Río" <%= usuario.banco_nombre === 'Banco Río' ? 'selected' : '' %>>Banco Río</option>
+        <option value="Banco Familiar" <%= usuario.banco_nombre === 'Banco Familiar' ? 'selected' : '' %>>Banco Familiar</option>
+        <option value="Banco Atlas" <%= usuario.banco_nombre === 'Banco Atlas' ? 'selected' : '' %>>Banco Atlas</option>
+        <option value="Bancop" <%= usuario.banco_nombre === 'Bancop' ? 'selected' : '' %>>Bancop</option>
+        <option value="Interfisa Banco" <%= usuario.banco_nombre === 'Interfisa Banco' ? 'selected' : '' %>>Interfisa Banco</option>
+        <option value="Solar Banco" <%= usuario.banco_nombre === 'Solar Banco' ? 'selected' : '' %>>Solar Banco</option>
+        <option value="Ueno Bank" <%= usuario.banco_nombre === 'Ueno Bank' ? 'selected' : '' %>>Ueno Bank</option>
+        <option value="Zeta Banco" <%= usuario.banco_nombre === 'Zeta Banco' ? 'selected' : '' %>>Zeta Banco</option>
+        <option value="Banco Nacional de Fomento" <%= usuario.banco_nombre === 'Banco Nacional de Fomento' ? 'selected' : '' %>>Banco Nacional de Fomento</option>
+        <option value="Financiera Paraguayo – Japonesa" <%= usuario.banco_nombre === 'Financiera Paraguayo – Japonesa' ? 'selected' : '' %>>Financiera Paraguayo – Japonesa</option>
+        <option value="Tu Financiera" <%= usuario.banco_nombre === 'Tu Financiera' ? 'selected' : '' %>>Tu Financiera</option>
+    </select>
+</div>
 
                             <div style="display: flex; gap: 10px;">
                                 <div class="form-group" style="flex: 2;">

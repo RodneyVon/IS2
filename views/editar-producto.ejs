@@ -8,20 +8,18 @@
 </head>
 <body>
     <nav>
-    <a href="/catalogo" class="nav-logo">
-        <span>✨</span> Marketplace
-    </a>
-    
-    <div class="nav-links">
-        <a href="/catalogo" class="nav-link">Inicio</a>
+        <a href="/catalogo" class="nav-logo">
+            <span>✨</span> Marketplace
+        </a>
         
-        <a href="/mis-productos" class="nav-link">Mi Panel</a>
-        
-        <a href="/perfil" class="nav-link">Mi Perfil</a>
-        
-        <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
-    </div>
-</nav>
+        <div class="nav-links">
+            <a href="/catalogo" class="nav-link">Inicio</a>
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/mis-productos" class="nav-link">Mi Panel</a>
+            <a href="/perfil" class="nav-link">Mi Perfil</a>
+            <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
+        </div>
+    </nav>
 
     <div class="edit-container">
         <div class="edit-card">
@@ -31,7 +29,7 @@
                 <p style="color: #636e72; font-size: 0.9rem;">Actualiza la información detallada de tu producto</p>
             </header>
 
-            <form action="/productos/editar/<%= producto.id %>" method="POST">
+            <form action="/productos/editar/<%= producto.id %>" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label>Nombre del Producto</label>
                     <input type="text" name="nombre" value="<%= producto.nombre %>" required>
@@ -48,19 +46,52 @@
                         <input type="number" name="precio" value="<%= producto.precio %>" required>
                     </div>
                     <div class="form-group">
-                        <label>Stock Disponible</label>
+                        <label>Stock Available</label>
                         <input type="number" name="stock" value="<%= producto.stock %>" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Categoría</label>
-                    <input type="text" name="categoria" value="<%= producto.categoria %>" placeholder="Ej: Madera, Joyería...">
+                    <label for="categoria">Categoría</label>
+                    <select name="categoria" id="categoria" required style="width: 100%; padding: 10px; border: 1.5px solid var(--borde); border-radius: 8px; background-color: #fff; font-family: inherit; color: var(--oscuro); cursor: pointer;">
+                        <option value="Cerámica y Barro" <%= producto.categoria === 'Cerámica y Barro' ? 'selected' : '' %>>🏺 Cerámica y Barro</option>
+                        <option value="Tejidos y Textiles" <%= producto.categoria === 'Tejidos y Textiles' ? 'selected' : '' %>>🧶 Tejidos y Textiles (Ao Po'i, Ñandutí)</option>
+                        <option value="Madera y Esculturas" <%= producto.categoria === 'Madera y Esculturas' ? 'selected' : '' %>>🪵 Madera y Esculturas</option>
+                        <option value="Cestería y Piri" <%= producto.categoria === 'Cestería y Piri' ? 'selected' : '' %>>🧺 Cestería y Piri</option>
+                        <option value="Cuero y Marroquinería" <%= producto.categoria === 'Cuero y Marroquinería' ? 'selected' : '' %>>💼 Cuero y Marroquinería</option>
+                        <option value="Joyería y Filigrana" <%= producto.categoria === 'Joyería y Filigrana' ? 'selected' : '' %>>✨ Joyería y Filigrana</option>
+                        <option value="Otros" <%= producto.categoria === 'Otros' ? 'selected' : '' %>>🎨 Otros</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
                     <label>Variantes u Opciones</label>
                     <input type="text" name="variantes" value="<%= producto.variantes %>" placeholder="Ej: Tallas, Colores, Materiales...">
+                </div>
+
+                <div class="form-group" style="margin-top: 25px;">
+                    <label style="font-weight: bold; display: block; margin-bottom: 10px;">Imágenes Actuales de la Obra:</label>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                        <% imagenes.forEach(img => { %>
+                            <div style="position: relative; width: 100px; text-align: center;">
+                                <img src="/uploads/productos/<%= img.ruta %>" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--borde);">
+                                <label style="display: block; margin-top: 5px; color: #e74c3c; font-size: 0.85rem; cursor: pointer; font-weight: 500;">
+                                    <input type="checkbox" name="eliminar_imagenes" value="<%= img.id %>"> 🗑️ Quitar
+                                </label>
+                            </div>
+                        <% }) %>
+                    </div>
+                    <% if (imagenes.length === 0 || (imagenes.length === 1 && imagenes[0].ruta === 'default-producto.png')) { %>
+                        <p style="color: #999; font-size: 0.85rem; font-style: italic; margin-bottom: 15px;">Este producto usa la foto genérica por defecto.</p>
+                    <% } %>
+                </div>
+
+                <div class="form-group">
+                    <label for="nuevas_imagenes" style="font-weight: bold;">Agregar nuevas imágenes (Máximo 5 en total):</label>
+                    <input type="file" name="imagenes" id="nuevas_imagenes" accept="image/*" multiple style="width: 100%; padding: 8px; border: 1.5px solid var(--borde); border-radius: 8px; background-color: #fff; box-sizing: border-box;">
+                    <small style="color: #7f8c8d; display: block; margin-top: 4px; font-size: 0.8rem;">
+                        💡 Sostén Ctrl para seleccionar múltiples archivos nuevos.
+                    </small>
                 </div>
 
                 <div style="margin-top: 30px;">

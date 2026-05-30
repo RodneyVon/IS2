@@ -13,24 +13,32 @@
             <span>✨</span> Marketplace
         </a>
         <div class="nav-links">
-            <a href="/catalogo" class="nav-link">Inicio</a>
-            <a href="/carrito" class="nav-link" style="position: relative;">
-                🛒 Carrito
-                <% if (carrito.length > 0) { %>
-                    <span style="background: var(--primario); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; position: absolute; top: -5px; right: -10px;">
-                        <%= carrito.length %>
-                    </span>
-                <% } %>
-            </a>
-            <% if (usuario) { %>
-                <% if (usuario.rol === 'artesano') { %>
-                    <a href="/ventas" class="nav-link" style="color: #e67e22; font-weight: bold;">📦 Mis Ventas</a>
-                <% } %>
-            <% } %>
-            <a href="/mis-productos" class="nav-link">Mi Panel</a>
-            <a href="/perfil" class="nav-link">Mi Perfil</a>
-            <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
-        </div>
+    <a href="/catalogo" class="nav-link">Inicio</a>
+    
+    <a href="/carrito" class="nav-link" style="position: relative;">
+        🛒 Carrito
+        <% if (typeof carrito !== 'undefined' && carrito && carrito.length > 0) { %>
+            <span style="background: var(--primario); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; position: absolute; top: -5px; right: -10px;">
+                <%= carrito.length %>
+            </span>
+        <% } %>
+    </a>
+
+    <% if (usuario) { %>
+        <a href="/dashboard" class="nav-link">Métricas del Sitio</a>
+
+        <% if (usuario.rol === 'artesano') { %>
+            <a href="/mis-estadisticas" class="nav-link" style="color: #2ecc71; font-weight: bold;">📊 Métricas De Mi Tienda</a>
+            <a href="/ventas" class="nav-link" style="color: #e67e22; font-weight: bold;">📦 Mis Ventas</a>
+        <% } %>
+        
+        <a href="/mis-productos" class="nav-link">Mi Panel</a>
+        <a href="/perfil" class="nav-link">Mi Perfil</a>
+        <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
+    <% } else { %>
+        <a href="/login" class="nav-link" style="font-weight: bold; color: var(--primario);">Iniciar Sesión</a>
+    <% } %>
+</div>
     </nav>
 
     <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
