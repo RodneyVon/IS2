@@ -99,11 +99,14 @@ async function setup() {
 //tabla de cupones
 await db.exec(`
     CREATE TABLE IF NOT EXISTS cupones (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        codigo TEXT UNIQUE NOT NULL,
-        descuento_porcentaje REAL NOT NULL,
-        activo INTEGER DEFAULT 1
-    )
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo TEXT NOT NULL UNIQUE,
+    descuento_porcentaje INTEGER NOT NULL,
+    fecha_fin DATE DEFAULT NULL,
+    activo INTEGER DEFAULT 1,
+    vendedor_id INTEGER,
+    FOREIGN KEY (vendedor_id) REFERENCES usuarios(id)
+)
 `);
 
     return db;

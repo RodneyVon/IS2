@@ -477,8 +477,31 @@ app.post('/ventas/crear-cupon', verificarSesion, async (req, res) => {
 });
 
 app.get('/mis-productos', verificarSesion, async (req, res) => {
-    const productos = await db.all('SELECT * FROM productos WHERE vendedor_id = ?', [req.session.usuario.id]);
-    res.render('panel-artesano', { productos });
+    try {
+        const vendedorId = req.session.usuario.id;
+
+        // 1. Consultamos los productos del artesano
+        const productos = await db.all(
+            'SELECT * FROM productos WHERE vendedor_id = ?', 
+            [vendedorId]
+        );
+
+        // 2. Consultamos los cupones creados por este artesano
+        const cupones = await db.all(
+            'SELECT * FROM cupones WHERE vendedor_id = ? ORDER BY id DESC', 
+            [vendedorId]
+        );
+
+        // 3. Enviamos AMBOS arreglos a la vista panel-artesano
+        res.render('panel-artesano', { 
+            productos, 
+            cupones // 👈 Ahora la vista sí podrá iterar y listar los cupones
+        });
+
+    } catch (error) {
+        console.error("Error al cargar el panel de productos y cupones:", error);
+        res.status(500).send("Error interno al cargar el panel");
+    }
 });
 
 //Agregamos 'uploadProducto' para que Multer procese las fotos antes de entrar a la lógica
@@ -830,7 +853,7 @@ app.post('/productos/editar/:id', verificarSesion, (req, res, next) => {
     } // 👈 Se cerró correctamente el bloque catch
 }); // 👈 Se cerró correctamente la ruta de Express
 
-// ==========================================
+/// ==========================================
 // 5. CARRITO Y COMPRAS (CLIENTE)
 // ==========================================
 
@@ -960,7 +983,7 @@ app.get('/carrito/confirmar', verificarSesion, async (req, res) => {
     }
 });
 
-// RUTA: Validar y aplicar el cupón al carrito del comprador
+// RUTA: Validar y aplicar el cupón al carrito del comprador (Con verificación de vencimiento)
 app.post('/carrito/aplicar-cupon', verificarSesion, async (req, res) => {
     try {
         const { codigo } = req.body;
@@ -979,6 +1002,15 @@ app.post('/carrito/aplicar-cupon', verificarSesion, async (req, res) => {
         if (!cupon) {
             req.flash('error_msg', '❌ El cupón ingresado no existe o ya no está vigente.');
             return res.redirect('/carrito/confirmar');
+        }
+
+        // NUEVO: Verificación de la fecha de expiración si el cupón la tiene
+        if (cupon.fecha_fin) {
+            const fechaActual = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+            if (fechaActual > cupon.fecha_fin) {
+                req.flash('error_msg', '❌ Lo sentimos, este cupón ya ha expirado.');
+                return res.redirect('/carrito/confirmar');
+            }
         }
 
         // Guardamos el cupón válido en la sesión para usarlo en el cálculo final
@@ -1061,9 +1093,91 @@ app.post('/carrito/finalizar', verificarSesion, upload.single('comprobante'), as
 
     } catch (error) {
         console.error("ERROR CRÍTICO EN PROCESO DE VENTA:", error); 
-        res.status(500).send("Error interno al procesar la venta"); // 👈 ¡Arreglado aquí!
-    } // 👈 Cierre del catch agregado
-}); // 👈 Cierre del app.post agregado
+        res.status(500).send("Error interno al procesar la venta"); 
+    } 
+});
+
+// ==========================================
+// NUEVAS RUTAS: GESTIÓN DE CUPONES DESDE EL PANEL
+// ==========================================
+
+// RUTA: Crear un cupón nuevo con fecha límite opcional y aviso flash
+app.post('/cupones/crear', verificarSesion, async (req, res) => {
+    try {
+        const { codigo, descuento_porcentaje, porcentaje, fecha_fin } = req.body;
+        const vendedorId = req.session.usuario.id;
+
+        const valorPorcentaje = descuento_porcentaje || porcentaje;
+
+        if (!codigo || !valorPorcentaje || Number(valorPorcentaje) <= 0 || Number(valorPorcentaje) > 100) {
+            req.flash('error_msg', '❌ Datos del cupón inválidos (El porcentaje debe estar entre 1 y 100)');
+            return res.redirect('/mis-productos'); // 👈 CORREGIDO
+        }
+
+        const codigoLimpio = codigo.toUpperCase().trim();
+        const fechaFinal = fecha_fin && fecha_fin.trim() !== '' ? fecha_fin : null;
+
+        await db.run(
+            `INSERT INTO cupones (codigo, descuento_porcentaje, fecha_fin, activo, vendedor_id) 
+             VALUES (?, ?, ?, 1, ?)`,
+            [codigoLimpio, Number(valorPorcentaje), fechaFinal, vendedorId]
+        );
+
+        req.flash('success_msg', `🎉 ¡Cupón "${codigoLimpio}" creado con éxito! Tus clientes ya pueden aplicarlo.`);
+        res.redirect('/mis-productos'); // 👈 CORREGIDO
+
+    } catch (error) {
+        console.error("Error al crear el cupón:", error);
+        if (error.message.includes("UNIQUE constraint failed")) {
+            req.flash('error_msg', '❌ Error: Ese código de cupón ya existe.');
+        } else {
+            req.flash('error_msg', '❌ Error al crear el cupón. Revisa los datos ingresados.');
+        }
+        res.redirect('/mis-productos'); // 👈 CORREGIDO
+    }
+});
+
+// RUTA: Eliminar físicamente un cupón de la base de datos
+app.post('/cupones/eliminar/:id', verificarSesion, async (req, res) => {
+    try {
+        const cuponId = req.params.id;
+        const vendedorId = req.session.usuario.id;
+
+        await db.run(
+            "DELETE FROM cupones WHERE id = ? AND vendedor_id = ?", 
+            [cuponId, vendedorId]
+        );
+
+        req.flash('success_msg', '🗑️ El cupón ha sido eliminado correctamente.');
+        res.redirect('/mis-productos'); // 👈 CORREGIDO
+
+    } catch (error) {
+        console.error("Error al eliminar el cupón:", error);
+        req.flash('error_msg', '❌ Hubo un error inesperado al intentar borrar el cupón.');
+        res.redirect('/mis-productos'); // 👈 CORREGIDO
+    }
+});
+
+// RUTA: Eliminar físicamente un cupón de la base de datos
+app.post('/cupones/eliminar/:id', verificarSesion, async (req, res) => {
+    try {
+        const cuponId = req.params.id;
+        const vendedorId = req.session.usuario.id;
+
+        await db.run(
+            "DELETE FROM cupones WHERE id = ? AND vendedor_id = ?", 
+            [cuponId, vendedorId]
+        );
+
+        req.flash('success_msg', '🗑️ El cupón ha sido eliminado correctamente.');
+        res.redirect('/panel-artesano');
+
+    } catch (error) {
+        console.error("Error al eliminar el cupón:", error);
+        req.flash('error_msg', '❌ Hubo un error inesperado al intentar borrar el cupón.');
+        res.redirect('/panel-artesano');
+    }
+});
 
 // --- HISTORIAL DE COMPRAS ---
 app.get('/mis-compras', verificarSesion, async (req, res) => {
