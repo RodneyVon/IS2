@@ -16,6 +16,12 @@
             justify-content: space-between;
             align-items: center;
             border-left: 5px solid #3498db;
+            flex-wrap: wrap; /* Permite que el contenido se ajuste si hay notas abajo */
+        }
+        /* MEJORA: El borde cambia a rojo si el pedido fue cancelado */
+        .pedido-card.cancelado {
+            border-left-5px-solid: #e74c3c;
+            border-left: 5px solid #e74c3c;
         }
         .estado-tag {
             padding: 5px 12px;
@@ -26,14 +32,29 @@
         }
         .estado-pagado { background: #eafaf1; color: #27ae60; }
         .estado-pendiente { background: #fff9e6; color: #f1c40f; }
+        /* MEJORA: Estilo visual para la etiqueta cuando se cancela */
+        .estado-cancelado { background: #fdf2f2; color: #e74c3c; }
+
+        /* Contenedor elegante para el mensaje del artesano */
+        .alerta-cancelacion {
+            width: 100%;
+            background-color: #fdf2f2;
+            color: #b83232;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 4px solid #e74c3c;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
     <nav>
         <a href="/catalogo" class="nav-logo"><span>✨</span> Marketplace</a>
         <div class="nav-links">
-            <a href="/catalogo" class="nav-link">Catálogo</a>
-            <a href="/perfil" class="nav-link">Mi Perfil</a>
+            <a href="/catalogo" class="nav-link">🏠 Inicio</a>
+            <a href="/perfil" class="nav-link">👤 Mi Perfil</a>
             <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
         </div>
     </nav>
@@ -46,17 +67,17 @@
 
         <% if (pedidos.length > 0) { %>
             <% pedidos.forEach(pedido => { %>
-                <div class="pedido-card">
+                <div class="pedido-card <%= pedido.estado === 'cancelado' ? 'cancelado' : '' %>">
                     <div>
                         <h3 style="margin: 0; color: #2d3436;">Pedido #<%= pedido.id %></h3>
                         <p style="margin: 5px 0; color: #636e72; font-size: 0.9rem;">
-                            Fecha: <%= pedido.fecha %> | <%= pedido.total_articulos %> artículos
+                            Fecha: <%= pedido.fecha %> | <%= pedido.total_articulos || 0 %> artículos
                         </p>
-                        <strong style="color: #2d3436; font-size: 1.1rem;">Total: ₲<%= pedido.total %></strong>
+                        <strong style="color: #2d3436; font-size: 1.1rem;">Total: ₲<%= pedido.total.toLocaleString('es-PY') %></strong>
                     </div>
                     
                     <div style="text-align: right;">
-                        <span class="estado-tag <%= pedido.estado === 'pagado' ? 'estado-pagado' : 'estado-pendiente' %>">
+                        <span class="estado-tag <%= pedido.estado === 'pagado' ? 'estado-pagado' : (pedido.estado === 'cancelado' ? 'estado-cancelado' : 'estado-pendiente') %>">
                             <%= pedido.estado %>
                         </span>
                         <div style="margin-top: 10px;">
@@ -65,6 +86,12 @@
                             </a>
                         </div>
                     </div>
+
+                    <% if (pedido.estado === 'cancelado' && pedido.comentario_vendedor) { %>
+                        <div class="alerta-cancelacion">
+                            <strong>Motivo de la cancelación:</strong> <%= pedido.comentario_vendedor %>
+                        </div>
+                    <% } %>
                 </div>
             <% }) %>
         <% } else { %>

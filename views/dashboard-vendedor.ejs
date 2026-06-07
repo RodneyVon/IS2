@@ -10,10 +10,13 @@
     <nav>
         <a href="/catalogo" class="nav-logo">✨ Marketplace</a>
         <div class="nav-links">
-            <a href="/catalogo" class="nav-link">Inicio</a>
-            <a href="/dashboard" class="nav-link">Métricas del Sitio</a>
-            <a href="/mis-estadisticas" class="nav-link" style="font-weight: bold; color: #2ecc71;">Mi Tienda (Métricas)</a>
-            <a href="/mis-productos" class="nav-link">Mi Panel</a>
+            <a href="/catalogo" class="nav-link">🏠Inicio</a>
+            <a href="/dashboard" class="nav-link">🏛️ Comunidad</a>
+            <% if (usuario.rol === 'artesano') { %>
+            <a href="/ventas" class="nav-link">📦 Mis Ventas</a>
+            <a href="/mis-productos" class="nav-link">🛠️ Mi Panel</a>
+            <% } %>
+            <a href="/perfil" class="nav-link">👤 Mi Perfil</a>
             <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
         </div>
     </nav>

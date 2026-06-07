@@ -7,14 +7,18 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <!-- 1. Navegación -->
     <nav>
         <a href="/catalogo" class="nav-logo">
             <span>✨</span> Marketplace
         </a>
         <div class="nav-links">
-            <a href="/catalogo" class="nav-link">Continuar Comprando</a>
-            <a href="/perfil" class="nav-link">Mi Perfil</a>
+            <a href="/catalogo" class="nav-link">🏠Inicio</a>
+            <a href="/dashboard" class="nav-link">🏛️ Comunidad</a>
+            <% if (usuario.rol === 'artesano') { %>
+            <a href="/mis-estadisticas" class="nav-link">📊 Mis Métricas</a>
+            <a href="/ventas" class="nav-link">📦 Mis Ventas</a>
+        <% } %>
+            <a href="/perfil" class="nav-link">👤 Mi Perfil</a>
             <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
         </div>
     </nav>
@@ -48,10 +52,47 @@
                     </tbody>
                 </table>
 
+                <div style="margin-top: 25px; margin-bottom: 25px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc; max-width: 450px; margin-left: auto;">
+                    <form action="/carrito/aplicar-cupon" method="POST" style="display: flex; gap: 10px;">
+                        <input 
+                            type="text" 
+                            name="codigo" 
+                            placeholder="¿Tienes un cupón de descuento?" 
+                            value="<%= cupon_codigo || '' %>"
+                            style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem; font-weight: bold; text-transform: uppercase;"
+                        >
+                        <button type="submit" style="background: var(--oscuro); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem;">
+                            Aplicar
+                        </button>
+                    </form>
+
+                    <% if (typeof error_cupon !== 'undefined' && error_cupon) { %>
+                        <p style="color: #e74c3c; font-size: 0.85rem; margin-top: 8px; margin-bottom: 0; font-weight: 500;">⚠️ <%= error_cupon %></p>
+                    <% } %>
+
+                    <% if (typeof descuento !== 'undefined' && descuento > 0) { %>
+                        <p style="color: #27ae60; font-size: 0.85rem; margin-top: 8px; margin-bottom: 0; font-weight: 500;">✅ ¡Cupón <strong><%= cupon_codigo %></strong> aplicado! Escaneando un <%= descuento %>% de rebaja.</p>
+                    <% } %>
+                </div>
+
                 <div style="text-align: right; padding: 20px; border-top: 2px solid #eee;">
-                    <h2 style="color: var(--oscuro); margin-bottom: 20px;">Total a pagar: ₲<%= total.toLocaleString() %></h2>
+                    <% 
+                        // Realizamos los cálculos dinámicos en base al descuento inyectado por el backend
+                        let subtotalGral = total; 
+                        let porcentaje = typeof descuento !== 'undefined' ? descuento : 0;
+                        let montoDescuento = subtotalGral * (porcentaje / 100);
+                        let totalFinal = subtotalGral - montoDescuento;
+                    %>
+
+                    <% if (porcentaje > 0) { %>
+                        <p style="margin: 5px 0; color: #7f8c8d; font-size: 1.1rem;">Subtotal: ₲<%= subtotalGral.toLocaleString() %></p>
+                        <p style="margin: 5px 0; color: #e74c3c; font-size: 1.1rem; font-weight: 500;">Descuento (<%= porcentaje %>%): -₲<%= montoDescuento.toLocaleString() %></p>
+                    <% } %>
+
+                    <h2 style="color: var(--oscuro); margin-bottom: 20px; font-size: 1.8rem;">
+                        Total a pagar: ₲<%= totalFinal.toLocaleString() %>
+                    </h2>
                     
-                    <!-- BOTÓN MODIFICADO: Ahora lleva al Checkout en lugar de procesar directo -->
                     <div style="margin-top: 20px;">
                         <a href="/checkout" class="btn-login" style="background-color: #27ae60; text-decoration: none; display: inline-block; width: auto; padding: 15px 40px; font-size: 1.1rem; color: white; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);">
                             📦 Continuar al Envío y Pago

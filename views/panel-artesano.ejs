@@ -13,10 +13,11 @@
         </a>
         
         <div class="nav-links">
-            <a href="/catalogo" class="nav-link">Inicio</a>
-            <a href="/dashboard" class="nav-link">Dashboard</a>
-            <a href="/mis-productos" class="nav-link">Mi Panel</a>
-            <a href="/perfil" class="nav-link">Mi Perfil</a>
+            <a href="/catalogo" class="nav-link">🏠Inicio</a>
+            <a href="/dashboard" class="nav-link">🏛️ Comunidad</a>
+            <a href="/mis-estadisticas" class="nav-link">📊 Mis Métricas</a>
+            <a href="/ventas" class="nav-link">📦 Mis Ventas</a>
+            <a href="/perfil" class="nav-link">👤 Mi Perfil</a>
             <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
         </div>
     </nav>
@@ -54,70 +55,99 @@
     </style>
 
     <div class="container" style="padding-top: 30px; max-width: 1200px; margin: auto;">
-        <h1 style="margin-left: 20px;">Gestión de Productos</h1>
+        <h1 style="margin-left: 20px;">Gestión de Productos y Promociones</h1>
     </div>
 
     <div class="panel-container">
-        <aside class="panel-card">
-            <h3 style="margin-bottom: 20px; color: var(--primario);">Subir Nueva Obra</h3>
+        <aside style="display: flex; flex-direction: column; gap: 20px;">
             
-            <form action="/productos/nuevo" method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label>Nombre del Producto</label>
-                    <input type="text" name="nombre" placeholder="Ej: Jarrón de Barro" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Descripción corta</label>
-                    <textarea name="descripcion" style="width: 100%; height: 80px; padding: 10px; border-radius: 8px; border: 1.5px solid var(--borde); font-family: inherit;"></textarea>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="panel-card" style="margin: 0; width: auto;">
+                <h3 style="margin-bottom: 20px; color: var(--primario);">Subir Nueva Obra</h3>
+                
+                <form action="/productos/nuevo" method="POST" enctype="multipart/form-data">
                     <div class="form-group">
-                        <label>Precio (₲)</label>
-                        <input type="number" name="precio" placeholder="0" required>
+                        <label>Nombre del Producto</label>
+                        <input type="text" name="nombre" placeholder="Ej: Jarrón de Barro" required>
                     </div>
+
                     <div class="form-group">
-                        <label>Stock</label>
-                        <input type="number" name="stock" placeholder="0" required>
+                        <label>Descripción corta</label>
+                        <textarea name="descripcion" style="width: 100%; height: 80px; padding: 10px; border-radius: 8px; border: 1.5px solid var(--borde); font-family: inherit;"></textarea>
                     </div>
-                </div>
 
-                <div class="form-group">
-    <label for="categoria">Categoría</label>
-    <select name="categoria" id="categoria" required style="width: 100%; padding: 10px; border: 1.5px solid var(--borde); border-radius: 8px; background-color: #fff; font-family: inherit; color: var(--oscuro); cursor: pointer;">
-        <option value="" disabled selected>-- Selecciona una categoría --</option>
-        <option value="Cerámica y Barro">🏺 Cerámica y Barro</option>
-        <option value="Tejidos y Textiles">🧶 Tejidos y Textiles (Ao Po'i, Ñandutí)</option>
-        <option value="Madera y Esculturas">🪵 Madera y Esculturas</option>
-        <option value="Cestería">🧺 Cestería y Piri</option>
-        <option value="Cuero">💼 Cuero y Marroquinería</option>
-        <option value="Joyería y Filigrana">✨ Joyería y Filigrana</option>
-        <option value="Otros">🎨 Otros</option>
-    </select>
-</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>Precio (₲)</label>
+                            <input type="number" name="precio" placeholder="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Stock</label>
+                            <input type="number" name="stock" placeholder="0" required>
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label>Variantes / Opciones</label>
-                    <input type="text" name="variantes" placeholder="Ej: Rojo, Azul, Verde">
-                </div>
+                    <div class="form-group">
+                        <label for="categoria">Categoría</label>
+                        <select name="categoria" id="categoria" required style="width: 100%; padding: 10px; border: 1.5px solid var(--borde); border-radius: 8px; background-color: #fff; font-family: inherit; color: var(--oscuro); cursor: pointer;">
+                            <option value="" disabled selected>-- Selecciona una categoría --</option>
+                            <option value="Cerámica y Barro">🏺 Cerámica y Barro</option>
+                            <option value="Tejidos y Textiles">🧶 Tejidos y Textiles (Ao Po'i, Ñandutí)</option>
+                            <option value="Madera y Esculturas">🪵 Madera y Esculturas</option>
+                            <option value="Cestería">🧺 Cestería y Piri</option>
+                            <option value="Cuero">💼 Cuero y Marroquinería</option>
+                            <option value="Joyería y Filigrana">✨ Joyería y Filigrana</option>
+                            <option value="Otros">🎨 Otros</option>
+                        </select>
+                    </div>
 
-                <div class="form-group">
-                    <label for="imagenes" style="font-weight: bold;">Imágenes del Producto (Hasta 5)</label>
-                    <input type="file" 
-                           name="imagenes" 
-                           id="imagenes" 
-                           accept="image/*" 
-                           multiple 
-                           required 
-                           style="width: 100%; padding: 8px; border: 1.5px solid var(--borde); border-radius: 8px; background-color: #fff; box-sizing: border-box;">
-                    <small style="color: #7f8c8d; display: block; margin-top: 4px; font-size: 0.8rem;">
-                        💡 Sostén la tecla Ctrl para elegir más de una foto.
-                    </small>
-                </div>
+                    <div class="form-group">
+                        <label>Variantes / Opciones</label>
+                        <input type="text" name="variantes" placeholder="Ej: Rojo, Azul, Verde">
+                    </div>
 
-                <button type="submit" class="btn-login" style="margin-top: 10px;">Publicar Producto</button>
-            </form>
+                    <div class="form-group">
+                        <label for="imagenes" style="font-weight: bold;">Imágenes del Producto (Hasta 5)</label>
+                        <input type="file" 
+                               name="imagenes" 
+                               id="imagenes" 
+                               accept="image/*" 
+                               multiple 
+                               required 
+                               style="width: 100%; padding: 8px; border: 1.5px solid var(--borde); border-radius: 8px; background-color: #fff; box-sizing: border-box;">
+                        <small style="color: #7f8c8d; display: block; margin-top: 4px; font-size: 0.8rem;">
+                            💡 Sostén la tecla Ctrl para elegir más de una foto.
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn-login" style="margin-top: 10px;">Publicar Producto</button>
+                </form>
+            </div>
+
+            <div class="panel-card" style="margin: 0; width: auto; border: 1px dashed var(--primario);">
+                <h3 style="margin-bottom: 10px; color: #27ae60; display: flex; align-items: center; gap: 8px;">
+                    🎟️ Crear Cupón Activo
+                </h3>
+                <p style="color: #7f8c8d; font-size: 0.8rem; margin-bottom: 15px; line-height: 1.3;">
+                    Genera códigos para tus clientes. Se aplicará globalmente al total del carrito.
+                </p>
+                
+                <form action="/ventas/crear-cupon" method="POST">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="font-size: 0.8rem; font-weight: bold;">Código del Cupón</label>
+                        <input type="text" name="codigo" placeholder="Ej: ARTESANO15" required style="text-transform: uppercase; padding: 8px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="font-size: 0.8rem; font-weight: bold;">Porcentaje Descuento (%)</label>
+                        <input type="number" name="porcentaje" min="1" max="100" placeholder="Ej: 15" required style="padding: 8px;">
+                    </div>
+
+                    <button type="submit" class="btn-login" style="background-color: #27ae60; margin-top: 5px; padding: 10px; font-size: 0.95rem;">
+                        ✨ Generar Descuento
+                    </button>
+                </form>
+            </div>
+
         </aside>
 
         <main class="panel-card" style="padding: 0;">

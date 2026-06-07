@@ -29,7 +29,37 @@
                 <p style="color: #636e72; font-size: 0.9rem;">Actualiza la información detallada de tu producto</p>
             </header>
 
-            <form action="/productos/editar/<%= producto.id %>" method="POST" enctype="multipart/form-data">
+            <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                <div style="background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; border: 1px solid #f5c6cb; text-align: center; font-weight: bold; margin-bottom: 20px; font-size: 0.9rem;">
+                    <%= error_msg %>
+                </div>
+            <% } %>
+
+            <div class="form-group" style="margin-top: 25px; border-bottom: 1px dashed var(--borde); padding-bottom: 20px;">
+                <label style="font-weight: bold; display: block; margin-bottom: 15px;">Imágenes Actuales de la Obra (Clic en ✕ para eliminar de inmediato):</label>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <% imagenes.forEach(img => { %>
+                        <div style="position: relative; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; border: 1px solid var(--borde); box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            <img src="/uploads/productos/<%= img.ruta %>" style="width: 100%; height: 100%; object-fit: cover;">
+                            
+                            <form action="/productos/eliminar-imagen/<%= img.id %>" method="POST" style="position: absolute; top: 4px; right: 4px; margin: 0; padding: 0; z-index: 10;">
+                                <input type="hidden" name="productoId" value="<%= producto.id %>">
+                                <button type="submit" 
+                                        onclick="return confirm('¿Estás seguro de que deseas eliminar esta imagen permanentemente?')" 
+                                        style="background-color: #e74c3c; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 0.75rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: transform 0.2s;"
+                                        title="Eliminar ahora mismo">
+                                    ✕
+                                </button>
+                            </form>
+                        </div>
+                    <% }) %>
+                </div>
+                <% if (imagenes.length === 0 || (imagenes.length === 1 && imagenes[0].ruta === 'default-producto.png')) { %>
+                    <p style="color: #999; font-size: 0.85rem; font-style: italic; margin-top: 10px;">Este producto usa la foto genérica por defecto.</p>
+                <% } %>
+            </div>
+
+            <form action="/productos/editar/<%= producto.id %>" method="POST" enctype="multipart/form-data" style="margin-top: 20px;">
                 <div class="form-group">
                     <label>Nombre del Producto</label>
                     <input type="text" name="nombre" value="<%= producto.nombre %>" required>
@@ -69,24 +99,7 @@
                     <input type="text" name="variantes" value="<%= producto.variantes %>" placeholder="Ej: Tallas, Colores, Materiales...">
                 </div>
 
-                <div class="form-group" style="margin-top: 25px;">
-                    <label style="font-weight: bold; display: block; margin-bottom: 10px;">Imágenes Actuales de la Obra:</label>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
-                        <% imagenes.forEach(img => { %>
-                            <div style="position: relative; width: 100px; text-align: center;">
-                                <img src="/uploads/productos/<%= img.ruta %>" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--borde);">
-                                <label style="display: block; margin-top: 5px; color: #e74c3c; font-size: 0.85rem; cursor: pointer; font-weight: 500;">
-                                    <input type="checkbox" name="eliminar_imagenes" value="<%= img.id %>"> 🗑️ Quitar
-                                </label>
-                            </div>
-                        <% }) %>
-                    </div>
-                    <% if (imagenes.length === 0 || (imagenes.length === 1 && imagenes[0].ruta === 'default-producto.png')) { %>
-                        <p style="color: #999; font-size: 0.85rem; font-style: italic; margin-bottom: 15px;">Este producto usa la foto genérica por defecto.</p>
-                    <% } %>
-                </div>
-
-                <div class="form-group">
+                <div class="form-group" style="margin-top: 20px;">
                     <label for="nuevas_imagenes" style="font-weight: bold;">Agregar nuevas imágenes (Máximo 5 en total):</label>
                     <input type="file" name="imagenes" id="nuevas_imagenes" accept="image/*" multiple style="width: 100%; padding: 8px; border: 1.5px solid var(--borde); border-radius: 8px; background-color: #fff; box-sizing: border-box;">
                     <small style="color: #7f8c8d; display: block; margin-top: 4px; font-size: 0.8rem;">

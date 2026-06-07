@@ -75,7 +75,8 @@ async function setup() {
         comprobante_ruta TEXT, -- [NUEVO] Para guardar el nombre del archivo .jpg/.png
         estado_pago TEXT DEFAULT 'verificación pendiente', -- [NUEVO] Control del artesano
         direccion TEXT, 
-        telefono TEXT,  
+        telefono TEXT,
+        comentario_vendedor TEXT,
         FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
     )
 `);
@@ -92,6 +93,16 @@ async function setup() {
         FOREIGN KEY(pedido_id) REFERENCES pedidos(id),
         FOREIGN KEY(producto_id) REFERENCES productos(id),
         FOREIGN KEY(vendedor_id) REFERENCES usuarios(id)
+    )
+`);
+
+//tabla de cupones
+await db.exec(`
+    CREATE TABLE IF NOT EXISTS cupones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo TEXT UNIQUE NOT NULL,
+        descuento_porcentaje REAL NOT NULL,
+        activo INTEGER DEFAULT 1
     )
 `);
 

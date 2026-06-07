@@ -8,9 +8,20 @@
 </head>
 <body>
 
-<main style="max-width: 800px; margin: 50px auto; padding: 20px; font-family: sans-serif; background: white; border-radius: 10px; shadow: 0 0 10px rgba(0,0,0,0.1);">
+<main style="max-width: 800px; margin: 50px auto; padding: 20px; font-family: sans-serif; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
     <h2 style="color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;">Finalizar Pedido</h2>
     
+    <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+        <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 6px; border: 1px solid #f5c6cb; text-align: center; margin-bottom: 20px; font-size: 0.9rem;">
+            <%= error_msg %>
+        </div>
+    <% } %>
+    <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+        <div style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 6px; border: 1px solid #c3e6cb; text-align: center; margin-bottom: 20px; font-size: 0.9rem;">
+            <%= success_msg %>
+        </div>
+    <% } %>
+
     <div style="display: flex; flex-wrap: wrap; gap: 30px; margin-top: 20px;">
         
         <div style="flex: 1; min-width: 300px;">
@@ -32,35 +43,70 @@
                     <p style="font-size: 0.8rem;">Por favor, contacta con el vendedor antes de pagar.</p>
                 <% } %>
 
-                <hr>
-                <p style="font-size: 1.2rem; color: #27ae60;"><strong>Total a transferir: ₲<%= total %></strong></p>
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
+
+                <div style="margin-bottom: 15px; background: #fff; border: 1px dashed #27ae60; padding: 12px; border-radius: 6px;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: bold; color: #27ae60; margin-bottom: 8px;">🎟️ ¿Tienes un cupón?</label>
+                    
+                    <% if (typeof cupon_aplicado !== 'undefined' && cupon_aplicado) { %>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; background: #e8f8f5; padding: 6px 10px; border-radius: 4px;">
+                            <span style="color: #117a65; font-weight: bold;">
+                                Activo: <%= cupon_aplicado.codigo %> (-<%= cupon_aplicado.descuento_porcentaje %>%)
+                            </span>
+                            <a href="/carrito" style="color: #e74c3c; text-decoration: none; font-weight: bold;">Quitar</a>
+                        </div>
+                    <% } else { %>
+                        <form action="/carrito/aplicar-cupon" method="POST" style="display: flex; gap: 8px; margin: 0;">
+                            <input type="text" name="codigo" placeholder="CÓDIGO" required style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; text-transform: uppercase; font-size: 0.85rem;">
+                            <button type="submit" style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">Aplicar</button>
+                        </form>
+                    <% } %>
+                </div>
+
+                <div style="font-size: 0.9rem; color: #555; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Subtotal base:</span>
+                        <span>₲<%= subtotal.toLocaleString('es-PY') %></span>
+                    </div>
+                    <% if (typeof descuento !== 'undefined' && descuento > 0) { %>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #e74c3c; font-weight: bold;">
+                            <span>Descuento cupón:</span>
+                            <span>- ₲<%= descuento.toLocaleString('es-PY') %></span>
+                        </div>
+                    <% } %> <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+                    <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; color: #2c3e50;">
+                        <span>Monto Real a Transferir:</span>
+                        <span style="color: #27ae60;">₲<%= total.toLocaleString('es-PY') %></span>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div style="flex: 1; min-width: 300px;">
-            <h3 style="font-size: 1.1rem;">2. Sube tu comprobante</h3>
+            <h3 style="font-size: 1.1rem;">2. Carga tus datos de envío y pago</h3>
             <form action="/carrito/finalizar" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
                 
                 <div>
-                    <label style="display:block; margin-bottom:5px;">Dirección de Envío:</label>
-                    <input type="text" name="direccion" required placeholder="Ej: Calle Mcal. Estigarribia 123" style="width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <label style="display: block; font-size: 0.9rem; margin-bottom: 5px; font-weight: bold; color: #34495e;">Dirección de Entrega:</label>
+                    <input type="text" name="direccion" placeholder="Ej: Avda. España casi Brasilia, Asunción" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
                 </div>
 
                 <div>
-                    <label style="display:block; margin-bottom:5px;">Teléfono de contacto:</label>
-                    <input type="text" name="telefono" required placeholder="0981..." style="width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <label style="display: block; font-size: 0.9rem; margin-bottom: 5px; font-weight: bold; color: #34495e;">Teléfono de Contacto:</label>
+                    <input type="tel" name="telefono" placeholder="Ej: 0981XXXXXX" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
                 </div>
 
-                <div>
-                    <label style="display:block; margin-bottom:5px;">Foto del Comprobante:</label>
-                    <input type="file" name="comprobante" accept="image/*" required>
+                <div style="background: #f4f6f7; padding: 15px; border-radius: 6px; border: 1px dashed #bdc3c7;">
+                    <label style="display: block; font-size: 0.9rem; margin-bottom: 8px; font-weight: bold; color: #34495e;">Subir Foto del Comprobante (Banco/Billetera):</label>
+                    <input type="file" name="comprobante" accept="image/*" required style="font-size: 0.85rem;">
                 </div>
 
-                <button type="submit" style="background: #27ae60; color: white; border: none; padding: 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px;">
-                    CONFIRMAR Y ENVIAR PEDIDO
+                <button type="submit" style="background: #27ae60; color: white; border: none; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s; margin-top: 10px;">
+                    Confirmar Pago y Finalizar Compra 🚀
                 </button>
             </form>
         </div>
+
     </div>
 </main>
 

@@ -13,7 +13,6 @@
             <span>✨</span> Marketplace
         </a>
         <div class="nav-links">
-    <a href="/catalogo" class="nav-link">Inicio</a>
     
     <a href="/carrito" class="nav-link" style="position: relative;">
         🛒 Carrito
@@ -25,15 +24,15 @@
     </a>
 
     <% if (usuario) { %>
-        <a href="/dashboard" class="nav-link">Métricas del Sitio</a>
+        <a href="/dashboard" class="nav-link">🏛️ Comunidad</a>
 
         <% if (usuario.rol === 'artesano') { %>
-            <a href="/mis-estadisticas" class="nav-link" style="color: #2ecc71; font-weight: bold;">📊 Métricas De Mi Tienda</a>
-            <a href="/ventas" class="nav-link" style="color: #e67e22; font-weight: bold;">📦 Mis Ventas</a>
+            <a href="/mis-estadisticas" class="nav-link">📊 Mis Métricas</a>
+            <a href="/ventas" class="nav-link">📦 Mis Ventas</a>
+            <a href="/mis-productos" class="nav-link">🛠️ Mi Panel</a>
         <% } %>
         
-        <a href="/mis-productos" class="nav-link">Mi Panel</a>
-        <a href="/perfil" class="nav-link">Mi Perfil</a>
+        <a href="/perfil" class="nav-link">👤 Mi Perfil</a>
         <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
     <% } else { %>
         <a href="/login" class="nav-link" style="font-weight: bold; color: var(--primario);">Iniciar Sesión</a>

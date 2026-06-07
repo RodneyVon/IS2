@@ -32,14 +32,17 @@
             background: #e74c3c;
             color: white;
             border: none;
-            padding: 5px 10px;
+            padding: 6px 10px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.75rem;
+            width: 100%;
+            margin-top: 5px;
+            font-weight: bold;
         }
         .btn-cancelar:hover { background: #c0392b; }
 
-        .link-comprobante {
+        .btn-ver {
             display: block;
             margin-top: 8px;
             font-size: 0.75rem;
@@ -47,7 +50,6 @@
             text-decoration: underline;
         }
 
-        /* Estilos nuevos para los datos de contacto */
         .info-contacto {
             font-size: 0.8rem;
             color: #555;
@@ -64,14 +66,40 @@
             display: block;
             line-height: 1.2;
         }
+
+        /* Caja de texto para la cancelación */
+        .input-motivo {
+            width: 100%;
+            font-size: 0.8rem;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            resize: none;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
     <nav>
         <a href="/catalogo" class="nav-logo"><span>✨</span> Marketplace</a>
         <div class="nav-links">
-            <a href="/mis-productos" class="nav-link">Mis Productos</a>
-            <a href="/perfil" class="nav-link">Mi Perfil</a>
+            <a href="/catalogo" class="nav-link">🏠Inicio</a>
+    <a href="/carrito" class="nav-link" style="position: relative;">
+        🛒 Carrito
+        <% if (typeof carrito !== 'undefined' && carrito && carrito.length > 0) { %>
+            <span style="background: var(--primario); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; position: absolute; top: -5px; right: -10px;">
+                <%= carrito.length %>
+            </span>
+        <% } %>
+    </a>
+        <a href="/dashboard" class="nav-link">🏛️ Comunidad</a>
+        <% if (usuario.rol === 'artesano') { %>
+        <a href="/mis-estadisticas" class="nav-link">📊 Mis Métricas</a>
+        <a href="/mis-productos" class="nav-link">🛠️ Mi Panel</a>
+        <% } %>
+        <a href="/perfil" class="nav-link">👤 Mi Perfil</a>
+        <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
         </div>
     </nav>
 
@@ -100,7 +128,6 @@
                             <td style="padding: 15px;"><strong><%= venta.producto_nombre %></strong></td>
                             <td style="padding: 15px; text-align: center;"><%= venta.cantidad %></td>
                             
-                            <!-- COLUMNA DE CLIENTE ACTUALIZADA -->
                             <td style="padding: 15px;">
                                 <strong style="color: var(--oscuro);">👤 <%= venta.cliente_nombre %></strong>
                                 
@@ -118,7 +145,7 @@
                             </td>
 
                             <td style="padding: 15px; text-align: right; font-weight: bold;">
-                                ₲<%= venta.cantidad * venta.precio_unitario %>
+                                ₲<%= (venta.cantidad * venta.precio_unitario).toLocaleString('es-PY') %>
                             </td>
 
                             <td style="padding: 15px; text-align: center;">
@@ -132,7 +159,13 @@
                                         ✏️ Editar Estado
                                     </a>
 
-                                    <form action="/ventas/cancelar/<%= venta.pedido_id %>" method="POST" onsubmit="return confirm('¿Seguro que quieres cancelar?')">
+                                    <form action="/ventas/cancelar/<%= venta.pedido_id %>" method="POST" onsubmit="return confirm('¿Seguro que quieres cancelar esta venta?')" style="margin-top: 5px; max-width: 200px; display: inline-block; text-align: left;">
+                                        <textarea 
+                                            name="comentario" 
+                                            class="input-motivo"
+                                            placeholder="Motivo del rechazo (ej. Comprobante falso)" 
+                                            rows="2" 
+                                            required></textarea>
                                         <button type="submit" class="btn-cancelar">
                                             ❌ Cancelar Venta
                                         </button>
@@ -143,8 +176,7 @@
 
                                 <% if (venta.comprobante_ruta) { %>
                                     <a href="/uploads/<%= venta.comprobante_ruta %>" target="_blank" class="btn-ver">
-    👁️ Ver Comprobante
-</a>
+                                        👁️ Ver Comprobante
                                     </a>
                                 <% } %>
                             </td>

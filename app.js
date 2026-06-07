@@ -427,7 +427,7 @@ app.get('/producto/:id', verificarSesion, async (req, res) => {
 app.get('/ventas', verificarSesion, async (req, res) => {
     if (req.session.usuario.rol !== 'artesano') return res.redirect('/catalogo');
     const ventas = await db.all(`
-        SELECT ped.id, pd.cantidad, p.nombre AS producto_nombre, ped.estado, ped.fecha, 
+        SELECT ped.id AS pedido_id, pd.cantidad, p.nombre AS producto_nombre, ped.estado, ped.fecha, 
                u.nombre AS cliente_nombre, pd.precio_unitario, ped.comprobante_ruta, ped.estado_pago
         FROM pedido_detalles pd
         JOIN productos p ON pd.producto_id = p.id
@@ -445,6 +445,35 @@ app.post('/ventas/actualizar-estado/:id', verificarSesion, async (req, res) => {
     await db.run('UPDATE pedidos SET estado = ?, estado_pago = ? WHERE id = ?', 
         [estado, estado_pago || 'verificación pendiente', req.params.id]);
     res.redirect('/ventas');
+});
+
+//RUTA: Procesar la creación de cupones desde el panel de Ventas
+app.post('/ventas/crear-cupon', verificarSesion, async (req, res) => {
+    try {
+        if (req.session.usuario.rol !== 'artesano') return res.redirect('/catalogo');
+
+        const { codigo, porcentaje } = req.body;
+
+        // Validaciones de seguridad básicas
+        if (!codigo || !porcentaje || porcentaje <= 0 || porcentaje > 100) {
+            return res.status(400).send("Datos del cupón inválidos (El porcentaje debe estar entre 1 y 100)");
+        }
+
+        // Insertamos el cupón (forzando mayúsculas y limpiando espacios en blanco)
+        await db.run(
+            "INSERT INTO cupones (codigo, descuento_porcentaje, activo) VALUES (?, ?, 1)",
+            [codigo.toUpperCase().trim(), parseFloat(porcentaje)]
+        );
+
+        // Volvemos a recargar el panel de ventas para ver el cambio
+        res.redirect('/ventas');
+    } catch (error) {
+        console.error("Error al crear cupón desde ventas:", error);
+        if (error.message.includes("UNIQUE constraint failed")) {
+            return res.status(400).send("Error: Ese código de cupón ya existe en el sistema.");
+        }
+        res.status(500).send("Error interno al generar el cupón");
+    }
 });
 
 app.get('/mis-productos', verificarSesion, async (req, res) => {
@@ -596,14 +625,18 @@ app.post('/ventas/cancelar/:id', verificarSesion, async (req, res) => {
     try {
         const pedidoId = req.params.id;
         const artesanoId = req.session.usuario.id;
+        
+        // 1. CAPTURAMOS EL COMENTARIO: Si viene vacío, asignamos un mensaje por defecto
+        const { comentario } = req.body;
+        const motivo = comentario && comentario.trim() !== "" ? comentario.trim() : "El artesano no especificó un motivo.";
 
-        // 1. Buscamos qué productos y qué cantidades hay que devolver
+        // 2. Buscamos qué productos y qué cantidades hay que devolver
         const productosAReponer = await db.all(
             "SELECT producto_id, cantidad FROM pedido_detalles WHERE pedido_id = ? AND vendedor_id = ?",
             [pedidoId, artesanoId]
         );
 
-        // 2. Devolvemos el stock a cada producto
+        // 3. Devolvemos el stock a cada producto
         for (const item of productosAReponer) {
             await db.run(
                 "UPDATE productos SET stock = stock + ? WHERE id = ?",
@@ -611,15 +644,15 @@ app.post('/ventas/cancelar/:id', verificarSesion, async (req, res) => {
             );
         }
 
-        // 3. Marcamos el pedido como cancelado
+        // 4. CORREGIDO: Marcamos el pedido como cancelado y GUARDAMOS EL COMENTARIO
         await db.run(
-            "UPDATE pedidos SET estado = 'cancelado', estado_pago = 'rechazado' WHERE id = ?",
-            [pedidoId]
+            "UPDATE pedidos SET estado = 'cancelado', estado_pago = 'rechazado', comentario_vendedor = ? WHERE id = ?",
+            [motivo, pedidoId]
         );
 
         res.redirect('/mis-ventas');
     } catch (error) {
-        console.error(error);
+        console.error("Error al cancelar la venta:", error);
         res.status(500).send("Error al cancelar la venta");
     }
 });
@@ -691,11 +724,54 @@ app.get('/productos/editar/:id', verificarSesion, async (req, res) => {
 });
 
 // Envolvemos la ruta para ejecutar Multer manualmente y atajar errores de subida masiva antes de tocar la BD
+// 🚀 BLOQUE 1: Nueva ruta para eliminar imágenes automáticamente al instante
+app.post('/productos/eliminar-imagen/:id', verificarSesion, async (req, res) => {
+    try {
+        const imagenId = req.params.id;
+        const { productoId } = req.body; // Recibimos el ID del producto para saber a dónde regresar
+        const vendedorId = req.session.usuario.id;
+
+        const fs = require('fs');
+        const path = require('path');
+
+        // 1. Validamos que la imagen exista y pertenezca a un producto del artesano logueado
+        const imagenValida = await db.get(`
+            SELECT pi.ruta 
+            FROM producto_imagenes pi
+            JOIN productos p ON pi.producto_id = p.id
+            WHERE pi.id = ? AND p.vendedor_id = ?
+        `, [imagenId, vendedorId]);
+
+        if (!imagenValida) {
+            req.flash('error_msg', '❌ No tienes permisos para eliminar esta imagen o no existe.');
+            return res.redirect(`/productos/editar/${productoId}`);
+        }
+
+        // 2. Borramos el archivo físico del disco del servidor
+        const rutaArchivo = path.join(__dirname, 'public', 'uploads', imagenValida.ruta);
+        if (fs.existsSync(rutaArchivo)) {
+            fs.unlinkSync(rutaArchivo);
+        }
+
+        // 3. Borramos la fila de la base de datos
+        await db.run('DELETE FROM producto_imagenes WHERE id = ?', [imagenId]);
+
+        req.flash('success_msg', 'Imagen eliminada de inmediato. ✨');
+        res.redirect(`/productos/editar/${productoId}`);
+
+    } catch (error) {
+        console.error("Error al eliminar imagen individual:", error);
+        req.flash('error_msg', 'Hubo un error al intentar quitar la imagen.');
+        res.redirect('/mis-productos');
+    }
+});
+
+// BLOQUE 2: Tu ruta de edición modificada (Limpia y enfocada solo en actualizar)
 app.post('/productos/editar/:id', verificarSesion, (req, res, next) => {
     uploadProducto(req, res, function (error) {
         if (error) {
             if (error instanceof multer.MulterError && error.code === 'LIMIT_UNEXPECTED_FILE') {
-                req.flash('error_msg', '❌ No puedes superar el límite de 5 imágenes en total.');
+                req.flash('error_msg', '❌ No puedes subir más de 5 imágenes simultáneamente.');
                 return res.redirect(`/productos/editar/${req.params.id}`);
             }
             req.flash('error_msg', '❌ Ocurrió un error al procesar las nuevas imágenes.');
@@ -705,32 +781,34 @@ app.post('/productos/editar/:id', verificarSesion, (req, res, next) => {
     });
 }, async (req, res) => {
     try {
-        // 1. Añadimos 'eliminar_imagenes' que viene de los checkboxes de la vista
-        const { nombre, descripcion, precio, stock, categoria, variantes, eliminar_imagenes } = req.body;
+        const { nombre, descripcion, precio, stock, categoria, variantes } = req.body;
         const productoId = req.params.id;
-        const vendedorId = req.session.usuario.id;
+        const sellerId = req.session.usuario.id;
         
-        // 2. Tu UPDATE original a la tabla 'productos' (Mantenido 100% idéntico)
+        // 1. Tu UPDATE original (Mantenido 100% idéntico)
         await db.run(
             `UPDATE productos 
              SET nombre=?, descripcion=?, precio=?, stock=?, categoria=?, variantes=? 
              WHERE id=? AND vendedor_id=?`,
-            [nombre, descripcion, precio, stock, categoria, variantes || null, productoId, vendedorId]
+            [nombre, descripcion, precio, stock, categoria, variantes || null, productoId, sellerId]
         );
 
-        // NUEVO: 3. Procesar eliminación de imágenes seleccionadas (Si marcó alguna)
-        if (eliminar_imagenes) {
-            // Si el usuario marca una sola casilla llega como String, si marca varias llega como Array.
-            // Nos aseguramos de tratarlo siempre como una lista (Array) para recorrerlo.
-            const imagenesABorrar = Array.isArray(eliminar_imagenes) ? eliminar_imagenes : [eliminar_imagenes];
-            
-            for (const imgId of imagenesABorrar) {
-                // Borramos el registro de la imagen asegurando que pertenezca al producto en cuestión
-                await db.run('DELETE FROM producto_imagenes WHERE id = ? AND producto_id = ?', [imgId, productoId]);
+        // 2. Controlamos el límite neto de 5 imágenes contando las que ya quedan en la BD
+        const imagenesActuales = await db.get('SELECT COUNT(*) as total FROM producto_imagenes WHERE producto_id = ?', [productoId]);
+        const cantidadNuevas = req.files ? req.files.length : 0;
+        
+        if (imagenesActuales.total + cantidadNuevas > 5) {
+            if (req.files && req.files.length > 0) {
+                const fs = require('fs');
+                req.files.forEach(file => {
+                    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                });
             }
+            req.flash('error_msg', '❌ El producto no puede tener más de 5 imágenes en total.');
+            return res.redirect(`/productos/editar/${productoId}`);
         }
 
-        // NUEVO: 4. Procesar la inserción de nuevas imágenes (Si adjuntó archivos)
+        // 3. Procesar inserción de nuevas imágenes si el artesano cargó archivos
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 await db.run(
@@ -742,14 +820,15 @@ app.post('/productos/editar/:id', verificarSesion, (req, res, next) => {
 
         req.flash('success_msg', 'Producto actualizado correctamente. ✨');
         res.redirect('/mis-productos');
+        
     } catch (error) {
         console.error("====== ERROR EN POST /productos/editar/:id ======");
         console.error(error);
         console.error("=================================================");
         req.flash('error_msg', 'Error al actualizar el producto.');
         res.redirect('/mis-productos');
-    }
-});
+    } // 👈 Se cerró correctamente el bloque catch
+}); // 👈 Se cerró correctamente la ruta de Express
 
 // ==========================================
 // 5. CARRITO Y COMPRAS (CLIENTE)
@@ -792,7 +871,7 @@ app.post('/carrito/agregar/:id', verificarSesion, async (req, res) => {
                 id: producto.id, 
                 nombre: producto.nombre, 
                 precio: parseFloat(producto.precio), 
-                vendedor_id: producto.vendedor_id, // <--- Esto faltaba en tu rollback
+                vendedor_id: producto.vendedor_id, 
                 cantidad: cantidadASumar 
             });
         }
@@ -814,29 +893,47 @@ app.post('/carrito/agregar/:id', verificarSesion, async (req, res) => {
 });
 
 app.get('/carrito', verificarSesion, (req, res) => {
-    let total = req.session.carrito.reduce((sum, item) => sum + (Number(item.precio) * Number(item.cantidad)), 0);
-    res.render('carrito', { items: req.session.carrito, total });
+    let total = req.session.carrito ? req.session.carrito.reduce((sum, item) => sum + (Number(item.precio) * Number(item.cantidad)), 0) : 0;
+    
+    res.render('carrito', { 
+        items: req.session.carrito || [], 
+        total: total,
+        descuento: req.session.descuento || 0,
+        cupon_codigo: req.session.cupon_codigo || null,
+        error_cupon: req.session.error_cupon || null
+    });
+
+    // Limpiamos el error de cupón tras renderizar para que no se quede fijo
+    req.session.error_cupon = null;
 });
 
 app.get('/checkout', verificarSesion, (req, res) => {
     res.redirect('/carrito/confirmar');
 });
 
-// [NUEVO] Esta es la página donde el usuario ve los datos de transferencia y sube el archivo
+// MODIFICACIÓN 2: Modificamos para calcular el total restándole el cupón activo
 app.get('/carrito/confirmar', verificarSesion, async (req, res) => {
     try {
         const carrito = req.session.carrito || [];
         if (carrito.length === 0) return res.redirect('/catalogo');
 
-        // Calculamos el total
-        const total = carrito.reduce((t, i) => t + (i.precio * i.cantidad), 0);
+        // 1. Calculamos el subtotal base 
+        const subtotal = carrito.reduce((t, i) => t + (i.precio * i.cantidad), 0);
+        
+        // 2. Conectamos con el sistema de cupones activos en la sesión
+        const cuponAplicado = req.session.cupon || null;
+        const porcentajeDescuento = cuponAplicado ? cuponAplicado.descuento_porcentaje : 0;
+        
+        // Redondeamos para manejar números enteros limpios en Guaraníes (₲)
+        const descuento = Math.round(subtotal * (porcentajeDescuento / 100));
+        const totalConDescuento = subtotal - descuento;
 
-        // OBTENEMOS LOS DATOS DEL VENDEDOR (del primer producto del carrito)
+        // 3. OBTENEMOS LOS DATOS DEL VENDEDOR 
         const primerProductoId = carrito[0].id;
         const vendedor = await db.get(`
             SELECT 
                 u.nombre, 
-                u.nombre_titular, -- [NUEVO] Agregamos el nombre legal del dueño de la cuenta
+                u.nombre_titular, 
                 u.banco_nombre, 
                 u.cuenta_numero, 
                 u.cuenta_tipo, 
@@ -847,18 +944,61 @@ app.get('/carrito/confirmar', verificarSesion, async (req, res) => {
             WHERE p.id = ?
         `, [primerProductoId]);
 
+        // 4. Renderizamos pasando el desglose completo
         res.render('confirmar-pago', { 
-            total, 
+            subtotal: subtotal,               
+            descuento: descuento,             
+            total: totalConDescuento,         
             carrito,
-            vendedor // Pasamos el objeto vendedor a la vista
+            vendedor,
+            cupon_aplicado: cuponAplicado     
         });
+
     } catch (error) {
         console.error("Error al cargar confirmar-pago:", error);
         res.status(500).send("Error interno");
     }
 });
 
-// [MODIFICADO INTEGRALMENTE] Esta ruta ahora procesa el comprobante y guarda todo en la DB
+// RUTA: Validar y aplicar el cupón al carrito del comprador
+app.post('/carrito/aplicar-cupon', verificarSesion, async (req, res) => {
+    try {
+        const { codigo } = req.body;
+
+        if (!codigo) {
+            req.flash('error_msg', '❌ Por favor, ingresa un código de cupón.');
+            return res.redirect('/carrito/confirmar'); 
+        }
+
+        // Buscamos el cupón en la base de datos 
+        const cupon = await db.get(
+            "SELECT * FROM cupones WHERE UPPER(codigo) = ? AND activo = 1",
+            [codigo.toUpperCase().trim()]
+        );
+
+        if (!cupon) {
+            req.flash('error_msg', '❌ El cupón ingresado no existe o ya no está vigente.');
+            return res.redirect('/carrito/confirmar');
+        }
+
+        // Guardamos el cupón válido en la sesión para usarlo en el cálculo final
+        req.session.cupon = {
+            id: cupon.id,
+            codigo: cupon.codigo,
+            descuento_porcentaje: cupon.descuento_porcentaje
+        };
+
+        req.flash('success_msg', `🎉 ¡Cupón ${cupon.codigo} aplicado! Se descontará el ${cupon.descuento_porcentaje}%.`);
+        res.redirect('/carrito/confirmar');
+
+    } catch (error) {
+        console.error("Error al aplicar el cupón:", error);
+        req.flash('error_msg', 'Hubo un error interno al procesar el descuento.');
+        res.redirect('/carrito/confirmar');
+    }
+});
+
+// MODIFICACIÓN 3: Al guardar el pedido final en la base de datos se guarda el precio rebajado
 app.post('/carrito/finalizar', verificarSesion, upload.single('comprobante'), async (req, res) => {
     try {
         const { direccion, telefono } = req.body;
@@ -866,37 +1006,41 @@ app.post('/carrito/finalizar', verificarSesion, upload.single('comprobante'), as
         const usuarioId = req.session.usuario.id;
         const nombreArchivo = req.file ? req.file.filename : null;
 
-        // Validación de seguridad: carrito vacío
         if (!carritoActual || carritoActual.length === 0) {
             return res.redirect('/catalogo');
         }
 
-        const totalVenta = carritoActual.reduce((t, i) => t + (i.precio * i.cantidad), 0);
+        // 1. Calculamos el subtotal original base
+        const subtotalVenta = carritoActual.reduce((t, i) => t + (i.precio * i.cantidad), 0);
+        
+        // 2. NUEVO: Leemos el porcentaje desde el objeto de cupón de la sesión
+        const cuponAplicado = req.session.cupon || null;
+        const porcentajeDescuento = cuponAplicado ? cuponAplicado.descuento_porcentaje : 0;
+        
+        // Calculamos el descuento y el total final redondeado a enteros para Guaraníes (₲)
+        const montoDescuento = Math.round(subtotalVenta * (porcentajeDescuento / 100));
+        const totalVentaFinal = subtotalVenta - montoDescuento;
 
-        // 1. Insertar Pedido (Cabecera)
+        // 3. Insertar Pedido (Cabecera)
         const result = await db.run(
             `INSERT INTO pedidos (usuario_id, total, estado, metodo_pago, direccion, telefono, comprobante_ruta, estado_pago) 
              VALUES (?, ?, 'pendiente', 'transferencia', ?, ?, ?, 'verificación pendiente')`,
-            [usuarioId, totalVenta, direccion, telefono, nombreArchivo]
+            [usuarioId, totalVentaFinal, direccion, telefono, nombreArchivo]
         );
         
         const pedidoId = result.lastID;
 
-        // 2. Insertar Detalles y Actualizar Stock
+        // 4. Insertar Detalles y Actualizar Stock 
         for (const item of carritoActual) {
-            // Obtenemos el ID del artesano/vendedor para el registro
             const prodInfo = await db.get('SELECT vendedor_id FROM productos WHERE id = ?', [item.id]);
 
             if (prodInfo) {
-                // Registro del detalle de la venta
                 await db.run(
                     `INSERT INTO pedido_detalles (pedido_id, producto_id, vendedor_id, cantidad, precio_unitario) 
                      VALUES (?, ?, ?, ?, ?)`,
                     [pedidoId, item.id, prodInfo.vendedor_id, item.cantidad, item.precio]
                 );
 
-                // --- DESCUENTO AUTOMÁTICO DE STOCK ---
-                // Se descuenta aquí para asegurar que el producto quede reservado tras subir el comprobante
                 await db.run(
                     'UPDATE productos SET stock = stock - ? WHERE id = ?',
                     [item.cantidad, item.id]
@@ -904,28 +1048,22 @@ app.post('/carrito/finalizar', verificarSesion, upload.single('comprobante'), as
             }
         }
 
-        // 3. Limpiar carrito y guardar sesión antes de renderizar
+        // 5. NUEVO: Limpiamos por completo el carrito y el objeto del cupón de la sesión
         req.session.carrito = [];
+        req.session.cupon = null; 
+
         req.session.save((err) => {
             if (err) {
                 console.error("Error al guardar sesión post-venta:", err);
             }
-            // Renderiza la vista de éxito pasando el ID del pedido generado
             res.render('confirmacion', { pedidoId }); 
         });
 
     } catch (error) {
-        // Log detallado en consola para depuración técnica
         console.error("ERROR CRÍTICO EN PROCESO DE VENTA:", error); 
-        
-        // Respuesta amigable pero informativa para el usuario
-        res.status(500).send(`
-            <h2>Error al procesar la compra</h2>
-            <p style="color: red;">${error.message}</p>
-            <a href="/carrito">Volver al carrito</a>
-        `);
-    }
-});
+        res.status(500).send("Error interno al procesar la venta"); // 👈 ¡Arreglado aquí!
+    } // 👈 Cierre del catch agregado
+}); // 👈 Cierre del app.post agregado
 
 // --- HISTORIAL DE COMPRAS ---
 app.get('/mis-compras', verificarSesion, async (req, res) => {
@@ -945,7 +1083,6 @@ app.get('/mis-compras/:id', verificarSesion, async (req, res) => {
         const pedido = await db.get(`SELECT * FROM pedidos WHERE id = ? AND usuario_id = ?`, [req.params.id, req.session.usuario.id]);
         if (!pedido) return res.status(404).send("Pedido no encontrado");
 
-        // Añadimos u.nombre para obtener el nombre del vendedor desde la tabla usuarios
         const detalles = await db.all(`
             SELECT 
                 pd.*, 
