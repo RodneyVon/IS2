@@ -853,7 +853,7 @@ app.post('/productos/editar/:id', verificarSesion, (req, res, next) => {
     } // 👈 Se cerró correctamente el bloque catch
 }); // 👈 Se cerró correctamente la ruta de Express
 
-/// ==========================================
+// ==========================================
 // 5. CARRITO Y COMPRAS (CLIENTE)
 // ==========================================
 
@@ -876,20 +876,30 @@ app.post('/carrito/agregar/:id', verificarSesion, async (req, res) => {
         // 2. VALIDACIÓN CRÍTICA: Impedir productos de diferentes vendedores
         if (req.session.carrito.length > 0) {
             const primerItem = req.session.carrito[0];
-            // Comparamos el vendedor del producto nuevo con el que ya está en el carrito
             if (producto.vendedor_id !== primerItem.vendedor_id) {
                 req.flash('error_msg', 'Solo puedes agregar productos de un mismo artesano por compra. Finaliza tu pedido actual primero.');
                 return req.session.save(() => res.redirect(req.get('Referrer') || '/catalogo'));
             }
         }
 
-        // 3. Lógica para añadir o actualizar cantidad
+        // 3. Lógica para añadir o actualizar cantidad (CORREGIDO PARA ADMITIR EL STOCK MÁXIMO EXACTO)
         const indiceExistente = req.session.carrito.findIndex(item => String(item.id) === productoIdStr);
+        
+        // Calculamos con precisión cuánto tiene actualmente en sesión para evitar desajustes
+        const cantidadEnCarritoActual = indiceExistente !== -1 ? req.session.carrito[indiceExistente].cantidad : 0;
+        const cantidadFinalPropuesta = cantidadEnCarritoActual + cantidadASumar;
 
+        // BARRERA DE CONTROL 1: Validar stock disponible al intentar agregar al carrito
+        // Ahora evalúa correctamente la suma acumulada contra el stock total (permite comprar el límite exacto)
+        if (cantidadFinalPropuesta > producto.stock) {
+            req.flash('error_msg', `⚠️ No puedes agregar esa cantidad. Stock disponible de "${producto.nombre}": ${producto.stock} und. (Tienes ${cantidadEnCarritoActual} en tu carrito)`);
+            return req.session.save(() => res.redirect(req.get('Referrer') || '/catalogo'));
+        }
+
+        // Si pasa la validación, modificamos la sesión de forma segura
         if (indiceExistente !== -1) {
-            req.session.carrito[indiceExistente].cantidad += cantidadASumar;
+            req.session.carrito[indiceExistente].cantidad = cantidadFinalPropuesta;
         } else {
-            // IMPORTANTE: Guardamos el vendedor_id aquí para futuras validaciones
             req.session.carrito.push({ 
                 id: producto.id, 
                 nombre: producto.nombre, 
@@ -926,7 +936,6 @@ app.get('/carrito', verificarSesion, (req, res) => {
         error_cupon: req.session.error_cupon || null
     });
 
-    // Limpiamos el error de cupón tras renderizar para que no se quede fijo
     req.session.error_cupon = null;
 });
 
@@ -934,24 +943,19 @@ app.get('/checkout', verificarSesion, (req, res) => {
     res.redirect('/carrito/confirmar');
 });
 
-// MODIFICACIÓN 2: Modificamos para calcular el total restándole el cupón activo
 app.get('/carrito/confirmar', verificarSesion, async (req, res) => {
     try {
         const carrito = req.session.carrito || [];
         if (carrito.length === 0) return res.redirect('/catalogo');
 
-        // 1. Calculamos el subtotal base 
         const subtotal = carrito.reduce((t, i) => t + (i.precio * i.cantidad), 0);
         
-        // 2. Conectamos con el sistema de cupones activos en la sesión
         const cuponAplicado = req.session.cupon || null;
         const porcentajeDescuento = cuponAplicado ? cuponAplicado.descuento_porcentaje : 0;
         
-        // Redondeamos para manejar números enteros limpios en Guaraníes (₲)
         const descuento = Math.round(subtotal * (porcentajeDescuento / 100));
         const totalConDescuento = subtotal - descuento;
 
-        // 3. OBTENEMOS LOS DATOS DEL VENDEDOR 
         const primerProductoId = carrito[0].id;
         const vendedor = await db.get(`
             SELECT 
@@ -967,9 +971,8 @@ app.get('/carrito/confirmar', verificarSesion, async (req, res) => {
             WHERE p.id = ?
         `, [primerProductoId]);
 
-        // 4. Renderizamos pasando el desglose completo
         res.render('confirmar-pago', { 
-            subtotal: subtotal,               
+            subtotal: subtotal,              
             descuento: descuento,             
             total: totalConDescuento,         
             carrito,
@@ -983,7 +986,6 @@ app.get('/carrito/confirmar', verificarSesion, async (req, res) => {
     }
 });
 
-// RUTA: Validar y aplicar el cupón al carrito del comprador (Con verificación de vencimiento)
 app.post('/carrito/aplicar-cupon', verificarSesion, async (req, res) => {
     try {
         const { codigo } = req.body;
@@ -993,7 +995,6 @@ app.post('/carrito/aplicar-cupon', verificarSesion, async (req, res) => {
             return res.redirect('/carrito/confirmar'); 
         }
 
-        // Buscamos el cupón en la base de datos 
         const cupon = await db.get(
             "SELECT * FROM cupones WHERE UPPER(codigo) = ? AND activo = 1",
             [codigo.toUpperCase().trim()]
@@ -1004,16 +1005,14 @@ app.post('/carrito/aplicar-cupon', verificarSesion, async (req, res) => {
             return res.redirect('/carrito/confirmar');
         }
 
-        // NUEVO: Verificación de la fecha de expiración si el cupón la tiene
         if (cupon.fecha_fin) {
-            const fechaActual = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+            const fechaActual = new Date().toISOString().split('T')[0];
             if (fechaActual > cupon.fecha_fin) {
                 req.flash('error_msg', '❌ Lo sentimos, este cupón ya ha expirado.');
                 return res.redirect('/carrito/confirmar');
             }
         }
 
-        // Guardamos el cupón válido en la sesión para usarlo en el cálculo final
         req.session.cupon = {
             id: cupon.id,
             codigo: cupon.codigo,
@@ -1030,7 +1029,7 @@ app.post('/carrito/aplicar-cupon', verificarSesion, async (req, res) => {
     }
 });
 
-// MODIFICACIÓN 3: Al guardar el pedido final en la base de datos se guarda el precio rebajado
+// BARRERA DE CONTROL 2: Blindaje estricto de Stock al finalizar pedido
 app.post('/carrito/finalizar', verificarSesion, upload.single('comprobante'), async (req, res) => {
     try {
         const { direccion, telefono } = req.body;
@@ -1042,18 +1041,24 @@ app.post('/carrito/finalizar', verificarSesion, upload.single('comprobante'), as
             return res.redirect('/catalogo');
         }
 
-        // 1. Calculamos el subtotal original base
+        // === SUB-BARRERA A: Validar stock en tiempo real antes de escribir en la DB ===
+        for (const item of carritoActual) {
+            const prodReal = await db.get('SELECT stock, nombre FROM productos WHERE id = ?', [item.id]);
+            
+            if (!prodReal || item.cantidad > prodReal.stock) {
+                req.flash('error_msg', `🚨 ¡Operación cancelada! El producto "${prodReal ? prodReal.nombre : 'Desconocido'}" ya no cuenta con stock suficiente en nuestro taller. Disponible: ${prodReal ? prodReal.stock : 0} und.`);
+                return req.session.save(() => res.redirect('/carrito'));
+            }
+        }
+
         const subtotalVenta = carritoActual.reduce((t, i) => t + (i.precio * i.cantidad), 0);
-        
-        // 2. NUEVO: Leemos el porcentaje desde el objeto de cupón de la sesión
         const cuponAplicado = req.session.cupon || null;
         const porcentajeDescuento = cuponAplicado ? cuponAplicado.descuento_porcentaje : 0;
         
-        // Calculamos el descuento y el total final redondeado a enteros para Guaraníes (₲)
         const montoDescuento = Math.round(subtotalVenta * (porcentajeDescuento / 100));
         const totalVentaFinal = subtotalVenta - montoDescuento;
 
-        // 3. Insertar Pedido (Cabecera)
+        // Insertar Pedido (Cabecera)
         const result = await db.run(
             `INSERT INTO pedidos (usuario_id, total, estado, metodo_pago, direccion, telefono, comprobante_ruta, estado_pago) 
              VALUES (?, ?, 'pendiente', 'transferencia', ?, ?, ?, 'verificación pendiente')`,
@@ -1062,7 +1067,7 @@ app.post('/carrito/finalizar', verificarSesion, upload.single('comprobante'), as
         
         const pedidoId = result.lastID;
 
-        // 4. Insertar Detalles y Actualizar Stock 
+        // Insertar Detalles y Actualizar Stock de forma estrictamente segura
         for (const item of carritoActual) {
             const prodInfo = await db.get('SELECT vendedor_id FROM productos WHERE id = ?', [item.id]);
 
@@ -1073,14 +1078,15 @@ app.post('/carrito/finalizar', verificarSesion, upload.single('comprobante'), as
                     [pedidoId, item.id, prodInfo.vendedor_id, item.cantidad, item.precio]
                 );
 
+                // === SUB-BARRERA B: El "AND stock >= ?" asegura que jamás baje de cero ante compras simultáneas ===
                 await db.run(
-                    'UPDATE productos SET stock = stock - ? WHERE id = ?',
-                    [item.cantidad, item.id]
+                    'UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?',
+                    [item.cantidad, item.id, item.cantidad]
                 );
             }
         }
 
-        // 5. NUEVO: Limpiamos por completo el carrito y el objeto del cupón de la sesión
+        // Limpiamos datos post-venta
         req.session.carrito = [];
         req.session.cupon = null; 
 
@@ -1096,7 +1102,6 @@ app.post('/carrito/finalizar', verificarSesion, upload.single('comprobante'), as
         res.status(500).send("Error interno al procesar la venta"); 
     } 
 });
-
 // ==========================================
 // NUEVAS RUTAS: GESTIÓN DE CUPONES DESDE EL PANEL
 // ==========================================
