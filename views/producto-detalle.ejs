@@ -19,10 +19,12 @@
                     </span>
                 <% } %>
             </a>
+            <a href="/dashboard" class="nav-link">🏛️ Comunidad</a>
             <% if (usuario && usuario.rol === 'artesano') { %>
-                <a href="/ventas" class="nav-link" style="color: #e67e22; font-weight: bold;">📦 Mis Ventas</a>
+                <a href="/mis-estadisticas" class="nav-link">📊 Mis Métricas</a>
+                <a href="/ventas" class="nav-link">📦 Mis Ventas</a>
+                <a href="/mis-productos" class="nav-link">🛠️ Mi Panel</a>
             <% } %>
-            <a href="/mis-productos" class="nav-link">🛠️ Mi Panel</a>
             <a href="/perfil" class="nav-link">👤 Mi Perfil</a>
             <a href="/logout" class="nav-link nav-link-logout">Cerrar Sesión</a>
         </div>

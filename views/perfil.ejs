@@ -55,7 +55,7 @@
                 <a href="/catalogo" class="btn-login" style="text-decoration: none;">🛒 Explorar Catálogo</a>
                 <a href="/mis-compras" class="btn-login" style="background-color: #3498db; text-decoration: none;">🛍️ Ver Mis Compras</a>
                 
-                <% if (rol === 'artesano') { %>
+               <% if (rol === 'artesano') { %>
                     <a href="/mis-productos" class="btn-login" style="background-color: #e67e22; text-decoration: none;">🔨 Gestionar Mis Productos</a>
                     <a href="/mis-ventas" class="btn-login" style="background-color: #27ae60; text-decoration: none;">📈 Ver Mis Ventas Recibidas</a>
 
@@ -65,37 +65,36 @@
                         
                         <form action="/perfil/actualizar-datos-cobro" method="POST">
                             <div class="form-group">
-    <label>Entidad Bancaria / Financiera:</label>
-    <select name="banco_nombre" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
-        <option value="" disabled <%= !usuario.banco_nombre ? 'selected' : '' %>>Selecciona una entidad...</option>
-        
-        <option value="Banco Itaú" <%= usuario.banco_nombre === 'Banco Itaú' ? 'selected' : '' %>>Banco Itaú</option>
-        <option value="Sudameris Bank" <%= usuario.banco_nombre === 'Sudameris Bank' ? 'selected' : '' %>>Sudameris Bank</option>
-        <option value="Banco GNB" <%= usuario.banco_nombre === 'Banco GNB' ? 'selected' : '' %>>Banco GNB</option>
-        <option value="Banco Basa S.A" <%= usuario.banco_nombre === 'Banco Basa S.A' ? 'selected' : '' %>>Banco Basa S.A</option>
-        <option value="Banco Continental" <%= usuario.banco_nombre === 'Banco Continental' ? 'selected' : '' %>>Banco Continental</option>
-        <option value="Banco Río" <%= usuario.banco_nombre === 'Banco Río' ? 'selected' : '' %>>Banco Río</option>
-        <option value="Banco Familiar" <%= usuario.banco_nombre === 'Banco Familiar' ? 'selected' : '' %>>Banco Familiar</option>
-        <option value="Banco Atlas" <%= usuario.banco_nombre === 'Banco Atlas' ? 'selected' : '' %>>Banco Atlas</option>
-        <option value="Bancop" <%= usuario.banco_nombre === 'Bancop' ? 'selected' : '' %>>Bancop</option>
-        <option value="Interfisa Banco" <%= usuario.banco_nombre === 'Interfisa Banco' ? 'selected' : '' %>>Interfisa Banco</option>
-        <option value="Solar Banco" <%= usuario.banco_nombre === 'Solar Banco' ? 'selected' : '' %>>Solar Banco</option>
-        <option value="Ueno Bank" <%= usuario.banco_nombre === 'Ueno Bank' ? 'selected' : '' %>>Ueno Bank</option>
-        <option value="Zeta Banco" <%= usuario.banco_nombre === 'Zeta Banco' ? 'selected' : '' %>>Zeta Banco</option>
-        <option value="Banco Nacional de Fomento" <%= usuario.banco_nombre === 'Banco Nacional de Fomento' ? 'selected' : '' %>>Banco Nacional de Fomento</option>
-        <option value="Financiera Paraguayo – Japonesa" <%= usuario.banco_nombre === 'Financiera Paraguayo – Japonesa' ? 'selected' : '' %>>Financiera Paraguayo – Japonesa</option>
-        <option value="Tu Financiera" <%= usuario.banco_nombre === 'Tu Financiera' ? 'selected' : '' %>>Tu Financiera</option>
-    </select>
-</div>
+                                <label>Entidad Bancaria / Financiera:</label>
+                                <select name="banco_nombre" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                                    <option value="" disabled <%= !usuario.banco_nombre ? 'selected' : '' %>>Selecciona una entidad...</option>
+                                    <option value="Banco Itaú" <%= usuario.banco_nombre === 'Banco Itaú' ? 'selected' : '' %>>Banco Itaú</option>
+                                    <option value="Sudameris Bank" <%= usuario.banco_nombre === 'Sudameris Bank' ? 'selected' : '' %>>Sudameris Bank</option>
+                                    <option value="Banco GNB" <%= usuario.banco_nombre === 'Banco GNB' ? 'selected' : '' %>>Banco GNB</option>
+                                    <option value="Banco Basa S.A" <%= usuario.banco_nombre === 'Banco Basa S.A' ? 'selected' : '' %>>Banco Basa S.A</option>
+                                    <option value="Banco Continental" <%= usuario.banco_nombre === 'Banco Continental' ? 'selected' : '' %>>Banco Continental</option>
+                                    <option value="Banco Río" <%= usuario.banco_nombre === 'Banco Río' ? 'selected' : '' %>>Banco Río</option>
+                                    <option value="Banco Familiar" <%= usuario.banco_nombre === 'Banco Familiar' ? 'selected' : '' %>>Banco Familiar</option>
+                                    <option value="Banco Atlas" <%= usuario.banco_nombre === 'Banco Atlas' ? 'selected' : '' %>>Banco Atlas</option>
+                                    <option value="Bancop" <%= usuario.bancop === 'Bancop' ? 'selected' : '' %>>Bancop</option>
+                                    <option value="Interfisa Banco" <%= usuario.interfisa === 'Interfisa Banco' ? 'selected' : '' %>>Interfisa Banco</option>
+                                    <option value="Solar Banco" <%= usuario.banco_nombre === 'Solar Banco' ? 'selected' : '' %>>Solar Banco</option>
+                                    <option value="Ueno Bank" <%= usuario.banco_nombre === 'Ueno Bank' ? 'selected' : '' %>>Ueno Bank</option>
+                                    <option value="Zeta Banco" <%= usuario.banco_nombre === 'Zeta Banco' ? 'selected' : '' %>>Zeta Banco</option>
+                                    <option value="Banco Nacional de Fomento" <%= usuario.banco_nombre === 'Banco Nacional de Fomento' ? 'selected' : '' %>>Banco Nacional de Fomento</option>
+                                    <option value="Financiera Paraguayo – Japonesa" <%= usuario.banco_nombre === 'Financiera Paraguayo – Japonesa' ? 'selected' : '' %>>Financiera Paraguayo – Japonesa</option>
+                                    <option value="Tu Financiera" <%= usuario.banco_nombre === 'Tu Financiera' ? 'selected' : '' %>>Tu Financiera</option>
+                                </select>
+                            </div>
 
                             <div style="display: flex; gap: 10px;">
                                 <div class="form-group" style="flex: 2;">
                                     <label>Número de Cuenta:</label>
-                                    <input type="text" name="cuenta_numero" value="<%= usuario.cuenta_numero || '' %>">
+                                    <input type="text" name="cuenta_numero" value="<%= usuario.cuenta_numero || '' %>" required maxlength="20" pattern="^[0-9\-]+$" title="Solo números y guiones" placeholder="Ej: 1234567">
                                 </div>
                                 <div class="form-group" style="flex: 1;">
                                     <label>Tipo:</label>
-                                    <select name="cuenta_tipo">
+                                    <select name="cuenta_tipo" required>
                                         <option value="Ahorro" <%= usuario.cuenta_tipo === 'Ahorro' ? 'selected' : '' %>>Ahorro</option>
                                         <option value="Corriente" <%= usuario.cuenta_tipo === 'Corriente' ? 'selected' : '' %>>Corriente</option>
                                     </select>
@@ -104,17 +103,25 @@
 
                             <div class="form-group">
                                 <label>Nombre Completo del Titular:</label>
-                                <input type="text" name="nombre_titular" value="<%= usuario.nombre_titular || '' %>" placeholder="Ej: Carlos Francisco Arguello Monges">
+                                <input type="text" name="nombre_titular" value="<%= usuario.nombre_titular || '' %>" required maxlength="60" pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$" title="Solo letras y espacios" placeholder="Ej: Carlos Francisco Arguello Monges">
                             </div>
 
                             <div class="form-group">
                                 <label>C.I. o RUC del Titular:</label>
-                                <input type="text" name="titular_documento" value="<%= usuario.titular_documento || '' %>">
+                                <input type="text" name="titular_documento" value="<%= usuario.titular_documento || '' %>" required maxlength="15" pattern="^[0-9.\-]+$" title="Solo números, puntos o guiones" placeholder="Ej: 4567890 o 123456-1">
                             </div>
 
                             <div class="form-group">
                                 <label>Alias (Opcional):</label>
-                                <input type="text" name="alias_pago" value="<%= usuario.alias_pago || '' %>" placeholder="Tu alias de cuenta">
+                                <div style="display: flex; gap: 10px;">
+                                    <select id="tipo_alias" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                                        <option value="cedula">Cédula (CI)</option>
+                                        <option value="telefono">Teléfono</option>
+                                        <option value="email">Email</option>
+                                    </select>
+                                    
+                                    <input type="text" id="alias_pago" name="alias_pago" value="<%= usuario.alias_pago || '' %>" style="flex: 2;" placeholder="Tu alias de cuenta">
+                                </div>
                             </div>
 
                             <button type="submit" class="btn-login" style="background-color: #2c3e50; border: none; width: 100%; cursor: pointer;">
@@ -122,8 +129,90 @@
                             </button>
                         </form>
                     </div>
+
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const tipoAlias = document.getElementById('tipo_alias');
+                            const inputAlias = document.getElementById('alias_pago');
+
+                            function adaptarInputAlias() {
+                                const seleccion = tipoAlias.value;
+                                const valorActual = inputAlias.value.trim();
+
+                                if (seleccion === 'telefono') {
+                                    inputAlias.type = 'tel';
+                                    inputAlias.maxLength = 15;
+                                    inputAlias.placeholder = 'Ej: 984XXXXXX';
+                                    inputAlias.pattern = '^\\+595[0-9]{9}$';
+                                    inputAlias.title = 'Favor escribir números. Debe empezar con +595 seguido de tu número de 9 dígitos';
+                                    
+                                    if (!valorActual.startsWith('+595')) {
+                                        let limpio = valorActual.replace(/\D/g, '');
+                                        if (limpio.startsWith('0')) limpio = limpio.substring(1);
+                                        inputAlias.value = '+595' + limpio;
+                                    }
+                                } else if (seleccion === 'cedula') {
+                                    inputAlias.type = 'text';
+                                    inputAlias.maxLength = 10; // Límite estricto de 10 caracteres
+                                    inputAlias.placeholder = 'Ej: 4567890';
+                                    inputAlias.pattern = '^[0-9]+$';
+                                    inputAlias.title = 'Favor escribir números. Solo dígitos del 0 al 9 permitidos.';
+                                    
+                                    // Si venía con texto inválido o el prefijo telefónico, lo vaciamos
+                                    if(valorActual.startsWith('+595') || valorActual.includes('@')) {
+                                        inputAlias.value = '';
+                                    } else {
+                                        // Dejamos solo los números existentes por si acaso
+                                        inputAlias.value = valorActual.replace(/\D/g, '');
+                                    }
+                                } else if (seleccion === 'email') {
+                                    inputAlias.type = 'email';
+                                    inputAlias.maxLength = 40; // Máximo de 40 caracteres
+                                    inputAlias.placeholder = 'Ej: mi-correo@email.com';
+                                    inputAlias.removeAttribute('pattern'); // Permite cualquier carácter estándar de mail
+                                    inputAlias.title = 'Ingresa un formato de correo electrónico válido';
+                                    
+                                    if(valorActual.startsWith('+595')) inputAlias.value = '';
+                                }
+                            }
+
+                            // Auto-detección inteligente del formato al cargar
+                            const valorInicial = inputAlias.value.trim();
+                            if (valorInicial.startsWith('+595')) {
+                                tipoAlias.value = 'telefono';
+                            } else if (valorInicial.includes('@')) {
+                                tipoAlias.value = 'email';
+                            } else if (valorInicial !== '') {
+                                tipoAlias.value = 'cedula';
+                            }
+
+                            // Ejecutar configuración inicial
+                            adaptarInputAlias();
+
+                            // Evento al cambiar la opción del dropdown
+                            tipoAlias.addEventListener('change', function() {
+                                inputAlias.value = ''; // Limpiar el campo para cambiar de formato limpiamente
+                                adaptarInputAlias();
+                                inputAlias.focus();
+                            });
+
+                            // Filtro en tiempo de ejecución (Bloqueo de teclas no numéricas)
+                            inputAlias.addEventListener('input', function() {
+                                if (tipoAlias.value === 'telefono') {
+                                    if (!inputAlias.value.startsWith('+595')) {
+                                        inputAlias.value = '+595';
+                                    }
+                                    const prefijo = '+595';
+                                    const resto = inputAlias.value.substring(4).replace(/\D/g, '');
+                                    inputAlias.value = prefijo + resto;
+                                } else if (tipoAlias.value === 'cedula') {
+                                    // REGLA ESTRICTA: Elimina de inmediato cualquier carácter que no sea un número puro
+                                    inputAlias.value = inputAlias.value.replace(/\D/g, '');
+                                }
+                            });
+                        });
+                    </script>
                 <% } %>
-            </div>
 
             <div class="auth-footer" style="margin-top: 20px;">
                 <a href="/logout" style="color: #e74c3c;">Cerrar sesión de forma segura</a>
