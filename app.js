@@ -270,10 +270,24 @@ app.get('/dashboard', verificarSesion, async (req, res) => {
         // 3. Calcular el Stock total general de productos disponibles
         const totalStock = await db.get('SELECT SUM(stock) AS total FROM productos');
 
-        // 4. MANTENIDO: Ventas Totales usando la columna 'total' de la cabecera de pedidos (Monto real neto cobrado)
-        const ventasCalculadas = await db.get("SELECT SUM(total) AS total_ventas FROM pedidos WHERE estado != 'cancelado' AND estado != 'rechazado'");
-        const totalVentas = ventasCalculadas.total_ventas || 0;
+        // 4. REEMPLAZADO: Ahora busca el Artesano con más productos vendidos (Vendedor del Mes)
+        // Eliminamos el cálculo de montos de dinero para resguardar la privacidad financiera
+        const topVendedorData = await db.get(`
+            SELECT u.nombre AS nombre_vendedor, SUM(pd.cantidad) AS total_vendido
+            FROM pedido_detalles pd
+            JOIN productos p ON pd.producto_id = p.id
+            JOIN usuarios u ON p.vendedor_id = u.id
+            JOIN pedidos ped ON pd.pedido_id = ped.id
+            WHERE ped.estado != 'cancelado' AND ped.estado != 'rechazado'
+            GROUP BY p.vendedor_id
+            ORDER BY total_vendido DESC
+            LIMIT 1
+        `);
 
+        // Estructuramos el mensaje que se va a inyectar en la tarjeta del dashboard
+            const vendedorDelMes = topVendedorData 
+            ? `${topVendedorData.nombre_vendedor} (${topVendedorData.total_vendido} und.)` 
+            : "Sin ventas registradas";
         // 5. Artesanías Favoritas usando tu tabla 'pedido_detalles' (pd) (Filtrando cancelados/rechazados)
         const artesaniasFavoritas = await db.all(`
             SELECT p.id, p.nombre, p.precio, SUM(pd.cantidad) AS veces_vendido,
@@ -297,12 +311,13 @@ app.get('/dashboard', verificarSesion, async (req, res) => {
             LIMIT 5
         `);
 
+        // Renderizamos pasándole las estadísticas actualizadas a tu vista .ejs
         res.render('dashboard', {
             estadisticas: {
                 productos: totalProductos.total || 0,
                 artesanos: totalArtesanos.total || 0,
                 stockGeneral: totalStock.total || 0,
-                ventasTotales: totalVentas,
+                vendedorDestacado: vendedorDelMes, // Variable asignada correctamente
                 favoritos: artesaniasFavoritas,
                 categorias: topCategorias
             },
@@ -316,7 +331,6 @@ app.get('/dashboard', verificarSesion, async (req, res) => {
         res.status(500).send("Error al cargar las estadísticas del sitio");
     }
 });
-
 
 // ROUTE: Dashboard Personal del Artesano
 app.get('/mis-estadisticas', verificarSesion, async (req, res) => {
@@ -334,35 +348,30 @@ app.get('/mis-estadisticas', verificarSesion, async (req, res) => {
         // 2. Calcular el Stock total de sus propios productos en depósito
         const totalStock = await db.get('SELECT SUM(stock) AS total FROM productos WHERE vendedor_id = ?', [vendedorId]);
 
-        // 3. ENFOQUE SEGURO: Traemos los detalles y el descuento de la cabecera para calcularlo en JS
-        // Esto evita que la consulta colapse si 'descuento' se llama de otra forma o es NULL
+        // 3. DINÁMICO Y PROPORCIONAL: Traemos los detalles, el total real pagado (cabecera) 
+        // y también agregamos el id del pedido para agrupar inteligentemente los cupones.
         const filasVentas = await db.all(`
-            SELECT pd.cantidad, pd.precio_unitario, ped.total AS total_cabecera
+            SELECT pd.pedido_id, pd.cantidad, pd.precio_unitario, ped.total AS total_cabecera
             FROM pedido_detalles pd
             JOIN pedidos ped ON pd.pedido_id = ped.id
             WHERE pd.vendedor_id = ? AND ped.estado != 'cancelado' AND ped.estado != 'rechazado'`, 
             [vendedorId]
         );
 
-        // Calculamos el total sumando los subtotales de los productos
         let totalVentas = 0;
         
         if (filasVentas.length > 0) {
-            // Como eres el único artesano en la plataforma, podemos igualar directamente 
-            // al total real neto cobrado en las cabeceras de los pedidos para que coincida con el dashboard global
-            const pedidosUnicos = {};
+            // Mapeamos los totales de las cabeceras de los pedidos únicos para evitar duplicar 
+            // sumas si un pedido tiene más de un producto del mismo artesano.
+            const pedidosProcesados = {};
             
             filasVentas.forEach(fila => {
-                // Sumamos el subtotal directo por ahora para asegurar estabilidad
-                totalVentas += (fila.cantidad * fila.precio_unitario);
+                // Si el pedido entero ya lo registramos, sumamos usando su valor real de cabecera neto
+                if (!pedidosProcesados[fila.pedido_id]) {
+                    totalVentas += fila.total_cabecera;
+                    pedidosProcesados[fila.pedido_id] = true;
+                }
             });
-
-            // Si notas que sigue habiendo diferencia, podemos aplicar un factor de ajuste manual 
-            // o usar directamente el valor neto si el descuento afectó a todo el sistema:
-            // Para que cuadre perfectamente con tus 3.880.000 de la comunidad:
-            if (totalVentas === 4350000) {
-                totalVentas = 3880000; 
-            }
         }
 
         // 4. Sus 3 artesanías más vendidas filtrando pedidos cancelados o rechazados
@@ -391,7 +400,7 @@ app.get('/mis-estadisticas', verificarSesion, async (req, res) => {
             estadisticas: {
                 productos: totalProductos.total || 0,
                 stockGeneral: totalStock.total || 0,
-                ventasTotales: totalVentas,
+                ventasTotales: Math.round(totalVentas), // Redondeamos para evitar decimales flotantes en Guaraníes
                 favoritos: misFavoritos,
                 categorias: misCategorias
             },
@@ -636,19 +645,21 @@ app.get('/mis-ventas', verificarSesion, async (req, res) => {
     if (req.session.usuario.rol !== 'artesano') return res.redirect('/catalogo');
     
     try {
-        const ventas = await db.all(`
+        // Añadimos ped.total (total_cabecera) para saber el monto neto real cobrado con el cupón
+        const ventasOriginales = await db.all(`
             SELECT 
                 ped.id AS pedido_id, 
                 p.nombre AS producto_nombre, 
                 pd.cantidad, 
                 pd.precio_unitario,
+                ped.total AS total_cabecera, -- Traemos el total real con descuento
                 ped.fecha, 
                 ped.estado, 
-                ped.direccion,      -- Dato real del formulario de compra
-                ped.telefono,       -- Dato real del formulario de compra
+                ped.direccion,      
+                ped.telefono,       
                 ped.comprobante_ruta,
                 u.nombre AS cliente_nombre,
-                u.email AS cliente_email -- Email de la cuenta del comprador
+                u.email AS cliente_email 
             FROM pedido_detalles pd
             JOIN productos p ON pd.producto_id = p.id
             JOIN pedidos ped ON pd.pedido_id = ped.id
@@ -656,6 +667,34 @@ app.get('/mis-ventas', verificarSesion, async (req, res) => {
             WHERE pd.vendedor_id = ?
             ORDER BY ped.fecha DESC
         `, [req.session.usuario.id]);
+
+        // Agrupamos temporalmente para saber cuánto sumaba el carrito original de este artesano antes del descuento
+        const totalesPorPedido = {};
+        ventasOriginales.forEach(v => {
+            if (!totalesPorPedido[v.pedido_id]) {
+                totalesPorPedido[v.pedido_id] = 0;
+            }
+            totalesPorPedido[v.pedido_id] += (v.cantidad * v.precio_unitario);
+        });
+
+        // Modificamos el precio_unitario dinámicamente para que refleje el valor real cobrado
+        const ventas = ventasOriginales.map(v => {
+            const subtotalOriginal = v.cantidad * v.precio_unitario;
+            const totalBrutoPedido = totalesPorPedido[v.pedido_id];
+            
+            // Calculamos qué factor de descuento real se aplicó sobre la cabecera (ej: 0.90 para un 10%)
+            // Si el total_cabecera coincide con el bruto, el factor es 1 (sin descuento)
+            const factorDescuento = totalBrutoPedido > 0 ? (v.total_cabecera / totalBrutoPedido) : 1;
+
+            // Ajustamos el precio unitario aplicando el factor proporcional para que coincida al centavo
+            const nuevoPrecioUnitario = v.precio_unitario * factorDescuento;
+
+            return {
+                ...v,
+                // Reemplazamos el precio unitario viejo por el neto real cobrado (redondeado de forma limpia para Gs.)
+                precio_unitario: Math.round(nuevoPrecioUnitario)
+            };
+        });
 
         res.render('mis-ventas', { ventas });
     } catch (error) {
